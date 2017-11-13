@@ -1,0 +1,22 @@
+{
+
+  "manifest_version": 2,
+  "name": "Time-Based Themes",
+  "version": "1.0",
+
+  "description": "Changes the theme based on the time of day.",
+
+  "icons": {
+    "48": "icons/border-48.png"
+  },
+
+  "permissions": [
+    "alarms",
+    "theme"
+  ],
+
+  "background": {
+    "scripts": ["background.js"]
+  }
+
+}
