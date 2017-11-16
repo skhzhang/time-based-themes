@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Time-Based Themes Options</title>
+    <link href="../css/options.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+    <header>
+        <h1>
+            Time-Based Themes Options
+        </h1>
+    </header>
+    <section>
+        <p>
+            <label for="alarm-interval">Check the time every </label>
+            <input type="number" id="alarm-interval" />
+            <label for="alarm-interval">minutes</label>
+        </p>
+        <p>
+          <div>
+            <input type="radio" id="radio-default"
+             name="theme" value="default">
+            <label for="radio-default">Default</label>
+            
+            <input type="radio" id="radio-dark"
+             name="theme" value="dark">
+            <label for="radio-dark">Dark</label>
+
+            <input type="radio" id="radio-light"
+             name="theme" value="light">
+            <label for="radio-light">Light</label>
+
+          </div>
+        </p>
+        <p>
+            <button id="apply-changes">Apply Changes</button>
+        </p>
+    </section>
+    <script type="text/javascript" src="../common.js"></script>
+    <script type="text/javascript" src="../options.js"></script>
+</body>
+</html>

@@ -1,5 +1,4 @@
 {
-
   "manifest_version": 2,
   "name": "Time-Based Themes",
   "version": "1.0",
@@ -12,11 +11,15 @@
 
   "permissions": [
     "alarms",
+    "tabs",
     "theme"
   ],
 
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["common.js", "background.js"]
+  },
+  "options_ui": {
+      "page": "html/options.html",
+      "open_in_tab": true
   }
-
 }
