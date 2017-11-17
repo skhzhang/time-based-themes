@@ -2,8 +2,8 @@
   "manifest_version": 2,
   "name": "Time-Based Theme Changer",
   "version": "1.0",
-
-  "description": "Automatically change Firefox's the theme based on the time.",
+  "homepage_url": "https://github.com/skhzhang/time-based-themes/",
+  "description": "Automatically change Firefox's theme based on the time.",
 
   "icons": {
   },
@@ -16,7 +16,7 @@
   ],
 
   "background": {
-    "scripts": ["common.js", "background.js"]
+    "scripts": ["js/common.js", "js/background.js"]
   },
 
   "options_ui": {
