@@ -6,13 +6,14 @@ const checkTimeIntervalKey = KEY_PREFIX + "checkTimeInterval";
 const sunriseTimeKey = KEY_PREFIX + "sunriseTime";
 const sunsetTimeKey = KEY_PREFIX + "sunsetTime";
 
+// Default themes are set after looking through the user's
+// current theme and their installed themes.
 let DEFAULT_DAYTIME_THEME = "";
 let DEFAULT_NIGHTTIME_THEME = "";
+
 const DEFAULT_CHECK_TIME_INTERVAL = 5;
 const DEFAULT_SUNRISE_TIME = "08:00";
 const DEFAULT_SUNSET_TIME = "20:00";
-
-// var currentTheme = '';
 
 // Set values if they each have never been set before,
 // such as on first-time startup.
@@ -25,69 +26,6 @@ if (!localStorage.hasOwnProperty(sunriseTimeKey)) {
 if (!localStorage.hasOwnProperty(sunsetTimeKey)) {
     localStorage[sunsetTimeKey] = DEFAULT_SUNSET_TIME;
 }
-
-const themes = {
-  'day': {
-    colors: {
-      accentcolor: '#CF723F',
-      textcolor: '#111',
-    }
-  },
-  'night': {
-    images: {
-      headerURL: 'headers/moon.jpg',
-    },
-    colors: {
-      accentcolor: '#000',
-      textcolor: '#4FC',
-    }
-  },
-  'default': {
-    images: {
-      headerURL: '',
-    },
-  },
-  'dark': {
-    images: {
-      headerURL: '',
-    },
-    colors: {
-      accentcolor: '#000',
-      textcolor: '#FFF',
-      toolbar: "#323234",
-    }
-  },
-  'light': {
-    images: {
-      headerURL: '',
-    },
-    colors: {
-      accentcolor: '#e3e4e6',
-      textcolor: '#000',
-      toolbar: "#f3f4f5",
-    }
-  }
-};
-
-/*
-// Set the theme.
-function setTheme(theme) {
-  if (theme === currentTheme) {
-    // No point in changing the theme if it has already been set.
-    return;
-  }
-  else if (theme === "default") {
-    resetTheme();
-  }
-  else {
-    console.log("Set theme to " + theme);
-    console.log(themes[theme]);
-
-    currentTheme = theme;
-    browser.theme.update(themes[theme]);
-  }
-}
-*/
 
 // Enable the theme.
 function enableTheme(themeId) {
@@ -111,13 +49,15 @@ function checkTime() {
     let sunsetSplit = localStorage[sunsetTimeKey].split(":");
 
     // Will set the sun theme between sunrise and sunset.
-    if (timeInBetween(hours, minutes, sunriseSplit[0], sunriseSplit[1], sunsetSplit[0], sunsetSplit[1])) {
+    if (timeInBetween(
+            hours, minutes, 
+            sunriseSplit[0], sunriseSplit[1], 
+            sunsetSplit[0], sunsetSplit[1])
+        ){
         console.log(localStorage[daytimeThemeKey]);
-        //setTheme(localStorage[daytimeThemeKey]);
         enableTheme(localStorage[daytimeThemeKey]);
     } else {
         console.log(localStorage[nighttimeThemeKey]);
-        //setTheme(localStorage[nighttimeThemeKey]);
         enableTheme(localStorage[nighttimeThemeKey]);
     }
 }
@@ -126,7 +66,9 @@ function checkTime() {
 function updateCheckTime(timeInterval) {
     browser.alarms.onAlarm.removeListener(checkTime);
     browser.alarms.onAlarm.addListener(checkTime);
-    browser.alarms.create('checkTime', {periodInMinutes: parseInt(localStorage[checkTimeIntervalKey])});
+    browser.alarms.create('checkTime', 
+        {periodInMinutes: parseInt(localStorage[checkTimeIntervalKey])}
+    );
     console.log("Set the alarm interval time to " + localStorage[checkTimeIntervalKey] + " mins.");
 }
 
@@ -135,7 +77,7 @@ function timeInBetween(
       curHours, curMins, 
       sunriseHours, sunriseMins, 
       sunsetHours, sunsetMins
-    ) {
+    ){
     let curTimeInMins = curHours * 60 + parseInt(curMins);
     let sunriseInMins = sunriseHours * 60 + parseInt(sunriseMins);
     let sunsetInMins = sunsetHours * 60 + parseInt(sunsetMins);

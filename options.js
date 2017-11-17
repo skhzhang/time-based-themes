@@ -6,27 +6,28 @@ let daytimeThemeList = document.getElementById("daytime-theme-list");
 let nighttimeThemeList = document.getElementById("nighttime-theme-list");
 let resetDefaultBtn = document.getElementById("reset-default-btn");
 
-// Iterate through each extension.
+// Iterate through each theme.
 browser.management.getAll().then((extensions) => {
     for (let extension of extensions) {
         if (extension.type === 'theme') {
             let extOption = document.createElement('option');
             extOption.textContent = extension.name;
             extOption.value = extension.id;
-            if (extension.enabled) {
-                extOption.selected = true;
-            }
 
             // Add each theme as an option in the dropdowns.
             daytimeThemeList.appendChild(extOption);
             nighttimeThemeList.appendChild(extOption.cloneNode(true));
 
-            // Set the default based on what theme is
-            // named default/dark.
-            // TODO: Find a better way to do this.
-            if (extension.name === "Default") {
+            // Set the default daytime/nighttime theme
+            // to the currently enabled theme.
+            if (extension.enabled) {
                 DEFAULT_DAYTIME_THEME = extension.id;
+                DEFAULT_NIGHTTIME_THEME = extension.id;
             }
+            // If there is a theme named "Dark",
+            // replace the default nighttime theme with this.
+            // "Dark" is the default dark theme that comes 
+            // with Firefox out of the box.
             if (extension.name === "Dark") {
                 DEFAULT_NIGHTTIME_THEME = extension.id;
             }
@@ -94,6 +95,9 @@ nighttimeThemeList.addEventListener('change',
 );
 
 // Reset all settings to their default.
+// Note that the "default" themes may change
+// depending on the user's current theme and their 
+// installed themes.
 resetDefaultBtn.addEventListener("click", 
     function(event) {
         localStorage[checkTimeIntervalKey] = DEFAULT_CHECK_TIME_INTERVAL;
