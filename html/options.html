@@ -27,8 +27,21 @@
             <input id="sunset-time" type="time">
         </p>
         <p>
+            <label for="manual-theme-set">Daytime theme: </label>
+
+            <select name="daytime-theme" id="daytime-theme-list">
+            </select>
+        </p>
+        <p>
+            <label for="manual-theme-set">Nighttime theme: </label>
+
+            <select name="nighttime-theme" id="nighttime-theme-list">
+            </select>
+        </p>
+        <!--
+        <p>
             <label for="manual-theme-set">Set the theme to: </label>
-            <div id="manual-theme-set">
+            <radiogroup>
                 <input type="radio" id="radio-default"
                  name="theme" value="default">
                 <label for="radio-default">Default</label>
@@ -40,9 +53,9 @@
                 <input type="radio" id="radio-light"
                  name="theme" value="light">
                 <label for="radio-light">Light</label>
-
-            </div>
+            </radiogroup>
         </p>
+        -->
         <p>
             <button id="reset-default-btn">Reset Settings to Default</button>
         </p>

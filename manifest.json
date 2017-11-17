@@ -1,15 +1,16 @@
 {
   "manifest_version": 2,
-  "name": "Time-Based Themes",
+  "name": "Time-Based Theme Changer",
   "version": "1.0",
 
-  "description": "Changes the theme based on the time of day.",
+  "description": "Automatically change Firefox's the theme based on the time.",
 
   "icons": {
   },
 
   "permissions": [
     "alarms",
+    "management",
     "tabs",
     "theme"
   ],
