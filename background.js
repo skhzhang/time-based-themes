@@ -16,7 +16,7 @@ checkTime();
 
 // Set up an alarm to check this regularly.
 browser.alarms.onAlarm.addListener(checkTime);
-browser.alarms.create('checkTime', {periodInMinutes: 5});
+browser.alarms.create('checkTime', {periodInMinutes: parseInt(localStorage[checkTimeIntervalKey])});
 
 // Manually set a theme. Overrides everything else.
 //setTheme('light');
