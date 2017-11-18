@@ -99,17 +99,19 @@ nighttimeThemeList.addEventListener('change',
 // installed themes.
 resetDefaultBtn.addEventListener("click", 
     function(event) {
-        localStorage[checkTimeIntervalKey] = DEFAULT_CHECK_TIME_INTERVAL;
-        localStorage[sunriseTimeKey] = DEFAULT_SUNRISE_TIME;
-        localStorage[sunsetTimeKey] = DEFAULT_SUNSET_TIME;
-        localStorage[daytimeThemeKey] = DEFAULT_DAYTIME_THEME;
-        localStorage[nighttimeThemeKey] = DEFAULT_NIGHTTIME_THEME;
+        if (window.confirm("Are you sure you want to reset to default settings?")) {
+            localStorage[checkTimeIntervalKey] = DEFAULT_CHECK_TIME_INTERVAL;
+            localStorage[sunriseTimeKey] = DEFAULT_SUNRISE_TIME;
+            localStorage[sunsetTimeKey] = DEFAULT_SUNSET_TIME;
+            localStorage[daytimeThemeKey] = DEFAULT_DAYTIME_THEME;
+            localStorage[nighttimeThemeKey] = DEFAULT_NIGHTTIME_THEME;
 
-        alarmIntervalInput.value = DEFAULT_CHECK_TIME_INTERVAL;
-        sunriseInput.value = DEFAULT_SUNRISE_TIME;
-        sunsetInput.value = DEFAULT_SUNSET_TIME;
-        daytimeThemeList.value = DEFAULT_DAYTIME_THEME;
-        nighttimeThemeList.value = DEFAULT_NIGHTTIME_THEME;
+            alarmIntervalInput.value = DEFAULT_CHECK_TIME_INTERVAL;
+            sunriseInput.value = DEFAULT_SUNRISE_TIME;
+            sunsetInput.value = DEFAULT_SUNSET_TIME;
+            daytimeThemeList.value = DEFAULT_DAYTIME_THEME;
+            nighttimeThemeList.value = DEFAULT_NIGHTTIME_THEME;
+        }
     }
 );
 
