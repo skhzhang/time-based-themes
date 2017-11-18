@@ -55,7 +55,6 @@ sunsetInput.value = localStorage[sunsetTimeKey];
 
 // Manually check the time and change the theme if appropriate.
 checkTimeBtn.addEventListener("click", function(event) {
-    console.log("test");
     checkTime();
 });
 
@@ -63,14 +62,14 @@ checkTimeBtn.addEventListener("click", function(event) {
 sunriseInput.addEventListener("input", function(event) {
 
     localStorage[sunriseTimeKey] = sunriseInput.value;
-    console.log("Set the sunrise time to " + sunriseInput.value);
+    // console.log("Set the sunrise time to " + sunriseInput.value);
 });
 
 // Change the sunset time.
 sunsetInput.addEventListener("input", function(event) {
 
     localStorage[sunsetTimeKey] = sunsetInput.value;
-    console.log("Set the sunset time to " + sunsetInput.value);
+    // console.log("Set the sunset time to " + sunsetInput.value);
 });
 
 // Change the alarm interval time.

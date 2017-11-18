@@ -30,13 +30,7 @@ if (!localStorage.hasOwnProperty(sunsetTimeKey)) {
 // Enable the theme.
 function enableTheme(themeId) {
     browser.management.setEnabled(themeId, true);
-    console.log("Enabled theme " + themeId);
-}
-
-// Reset all updates made to the user's theme.
-function resetTheme() {
-    browser.theme.reset();
-    console.log("Reset the user's theme to their originally selected theme.");
+    // console.log("Enabled theme " + themeId);
 }
 
 // Check the current system time and set the theme based on the time.
@@ -54,10 +48,8 @@ function checkTime() {
             sunriseSplit[0], sunriseSplit[1], 
             sunsetSplit[0], sunsetSplit[1])
         ){
-        console.log(localStorage[daytimeThemeKey]);
         enableTheme(localStorage[daytimeThemeKey]);
     } else {
-        console.log(localStorage[nighttimeThemeKey]);
         enableTheme(localStorage[nighttimeThemeKey]);
     }
 }
@@ -69,7 +61,7 @@ function updateCheckTime(timeInterval) {
     browser.alarms.create('checkTime', 
         {periodInMinutes: parseInt(localStorage[checkTimeIntervalKey])}
     );
-    console.log("Set the alarm interval time to " + localStorage[checkTimeIntervalKey] + " mins.");
+    // console.log("Set the alarm interval time to " + localStorage[checkTimeIntervalKey] + " mins.");
 }
 
 // Helper function to figure out if a time is in-between two times.
@@ -90,18 +82,16 @@ function timeInBetween(
 
         // So, we need to do the comparisons a little differently.
         if (sunriseInMins <= curTimeInMins || curTimeInMins < sunsetInMins) {
-            console.log("It is currently daytime.");
+            // console.log("It is currently daytime.");
             return true;
         }
     }
     else {
         if (sunriseInMins <= curTimeInMins && curTimeInMins < sunsetInMins) {
-            console.log("It is currently daytime.");
+            // console.log("It is currently daytime.");
             return true;
         }
     }
-
-    console.log("It is currently nighttime.");
-
+    // console.log("It is currently nighttime.");
     return false;
 }
