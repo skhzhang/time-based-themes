@@ -1,5 +1,6 @@
 let checkTimeBtn = document.getElementById("check-time-btn");
 let alarmIntervalInput = document.getElementById("alarm-interval");
+let checkStartupBox = document.getElementById("check-startup-only");
 let sunriseInput = document.getElementById("sunrise-time");
 let sunsetInput = document.getElementById("sunset-time");
 let daytimeThemeList = document.getElementById("daytime-theme-list");
@@ -9,10 +10,13 @@ let resetDefaultBtn = document.getElementById("reset-default-btn");
 // Iterate through each theme.
 browser.management.getAll().then((extensions) => {
     for (let extension of extensions) {
+        let extOption = document.createElement('option');
+        extOption.textContent = extension.name;
+        extOption.value = extension.id;
+
+        // nighttimeExtList.appendChild(extOption);
+
         if (extension.type === 'theme') {
-            let extOption = document.createElement('option');
-            extOption.textContent = extension.name;
-            extOption.value = extension.id;
 
             // Add each theme as an option in the dropdowns.
             daytimeThemeList.appendChild(extOption);
@@ -53,6 +57,27 @@ alarmIntervalInput.value = parseInt(localStorage[checkTimeIntervalKey]);
 sunriseInput.value = localStorage[sunriseTimeKey];
 sunsetInput.value = localStorage[sunsetTimeKey];
 
+// Change the alarm interval time.
+alarmIntervalInput.addEventListener("input", function(event) {
+
+    localStorage[checkTimeIntervalKey] = parseInt(alarmIntervalInput.value);
+    updateCheckTime(localStorage[checkTimeIntervalKey]);
+});
+
+// Only check the time on start-up.
+checkStartupBox.addEventListener("input", function(event) {
+    if (checkStartupBox.checked) {
+        alarmIntervalInput.disabled = true;
+        localStorage[checkTimeStartupOnlyKey] = true;
+        browser.alarms.onAlarm.removeListener(checkTime);
+    }
+    else {
+        alarmIntervalInput.disabled = false;
+        localStorage[checkTimeStartupOnlyKey] = false;
+        updateCheckTime(localStorage[checkTimeIntervalKey]);
+    }
+});
+
 // Manually check the time and change the theme if appropriate.
 checkTimeBtn.addEventListener("click", function(event) {
     checkTime();
@@ -70,13 +95,6 @@ sunsetInput.addEventListener("input", function(event) {
 
     localStorage[sunsetTimeKey] = sunsetInput.value;
     // console.log("Set the sunset time to " + sunsetInput.value);
-});
-
-// Change the alarm interval time.
-alarmIntervalInput.addEventListener("input", function(event) {
-
-    localStorage[checkTimeIntervalKey] = parseInt(alarmIntervalInput.value);
-    updateCheckTime(localStorage[checkTimeIntervalKey]);
 });
 
 // Set the daytime theme.

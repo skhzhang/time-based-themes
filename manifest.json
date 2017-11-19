@@ -10,8 +10,7 @@
 
   "permissions": [
     "alarms",
-    "management",
-    "theme"
+    "management"
   ],
 
   "background": {

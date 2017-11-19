@@ -17,8 +17,14 @@
             <input type="number" id="alarm-interval" min="1"/>
             <label for="alarm-interval">minutes</label>
 
+            <input type="checkbox" id="check-startup-only" />
+            <label for="check-startup-only">Check only on start-up</label>
+        </p>
+
+        <p>
             <button id="check-time-btn">Manually check time</button>
         </p>
+
         <p>
             <label for="sunrise-time">Sunrise time: </label>
             <input id="sunrise-time" type="time">
@@ -26,14 +32,25 @@
             <label for="sunset-time">Sunset time: </label>
             <input id="sunset-time" type="time">
         </p>
+
+        <!--
         <p>
-            <label for="manual-theme-set">Daytime theme: </label>
+            <label for="nighttime-ext-list">Enable these extensions at night: </label>
+
+            <select name="nighttime-exts" id="nighttime-ext-list" multiple>
+            </select>
+        </p>
+        -->
+
+        <p>
+            <label for="daytime-theme-list">Daytime theme: </label>
 
             <select name="daytime-theme" id="daytime-theme-list">
             </select>
         </p>
         <p>
             <label for="manual-theme-set">Nighttime theme: </label>
+            <label for="nighttime-theme-list">Nighttime theme: </label>
 
             <select name="nighttime-theme" id="nighttime-theme-list">
             </select>

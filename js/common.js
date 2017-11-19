@@ -1,8 +1,9 @@
 const KEY_PREFIX = 'tbthemesinfo';
 
+const checkTimeIntervalKey = KEY_PREFIX + "checkTimeInterval";
+const checkTimeStartupOnlyKey = KEY_PREFIX + "checkTimeStartupOnly";
 const daytimeThemeKey = KEY_PREFIX + "daytimeTheme";
 const nighttimeThemeKey = KEY_PREFIX + "nighttimeTheme";
-const checkTimeIntervalKey = KEY_PREFIX + "checkTimeInterval";
 const sunriseTimeKey = KEY_PREFIX + "sunriseTime";
 const sunsetTimeKey = KEY_PREFIX + "sunsetTime";
 
@@ -11,12 +12,16 @@ const sunsetTimeKey = KEY_PREFIX + "sunsetTime";
 let DEFAULT_DAYTIME_THEME = "";
 let DEFAULT_NIGHTTIME_THEME = "";
 
+const DEFAULT_CHECK_TIME_STARTUP_ONLY = false;
 const DEFAULT_CHECK_TIME_INTERVAL = 5;
 const DEFAULT_SUNRISE_TIME = "08:00";
 const DEFAULT_SUNSET_TIME = "20:00";
 
 // Set values if they each have never been set before,
 // such as on first-time startup.
+if (!localStorage.hasOwnProperty(checkTimeStartupOnlyKey)) {
+    localStorage[checkTimeStartupOnlyKey] = DEFAULT_CHECK_TIME_STARTUP_ONLY;
+}
 if (!localStorage.hasOwnProperty(checkTimeIntervalKey)) {
     localStorage[checkTimeIntervalKey] = DEFAULT_CHECK_TIME_INTERVAL;
 }
