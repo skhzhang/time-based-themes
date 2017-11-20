@@ -17,7 +17,6 @@ browser.management.getAll().then((extensions) => {
         // nighttimeExtList.appendChild(extOption);
 
         if (extension.type === 'theme') {
-
             // Add each theme as an option in the dropdowns.
             daytimeThemeList.appendChild(extOption);
             nighttimeThemeList.appendChild(extOption.cloneNode(true));
@@ -37,16 +36,6 @@ browser.management.getAll().then((extensions) => {
             }
         }
     }
-
-    // Set values if they each have never been set before,
-    // such as on first-time startup.
-    if (!localStorage.hasOwnProperty(daytimeThemeKey)) {
-      localStorage[daytimeThemeKey] = DEFAULT_DAYTIME_THEME;
-    }
-    if (!localStorage.hasOwnProperty(nighttimeThemeKey)) {
-      localStorage[nighttimeThemeKey] = DEFAULT_NIGHTTIME_THEME;
-    }
-
     // Set the value to match the one in localStorage.
     daytimeThemeList.value = localStorage[daytimeThemeKey];
     nighttimeThemeList.value = localStorage[nighttimeThemeKey];
@@ -59,7 +48,6 @@ sunsetInput.value = localStorage[sunsetTimeKey];
 
 // Change the alarm interval time.
 alarmIntervalInput.addEventListener("input", function(event) {
-
     localStorage[checkTimeIntervalKey] = parseInt(alarmIntervalInput.value);
     updateCheckTime(localStorage[checkTimeIntervalKey]);
 });
@@ -85,14 +73,12 @@ checkTimeBtn.addEventListener("click", function(event) {
 
 // Change the sunrise time.
 sunriseInput.addEventListener("input", function(event) {
-
     localStorage[sunriseTimeKey] = sunriseInput.value;
     // console.log("Set the sunrise time to " + sunriseInput.value);
 });
 
 // Change the sunset time.
 sunsetInput.addEventListener("input", function(event) {
-
     localStorage[sunsetTimeKey] = sunsetInput.value;
     // console.log("Set the sunset time to " + sunsetInput.value);
 });

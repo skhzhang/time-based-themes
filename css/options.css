@@ -2,6 +2,15 @@ body {
     color: #333;
     font-family: Arial;
     font-size: 12px;
+
     margin: 0;
     padding: 0;
+}
+
+header {
+    padding: 0 5em;
+}
+
+section {
+    padding: 0.5em 5em;
 }

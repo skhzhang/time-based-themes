@@ -1,3 +1,5 @@
+'use strict';
+
 const KEY_PREFIX = 'tbthemesinfo';
 
 const checkTimeIntervalKey = KEY_PREFIX + "checkTimeInterval";
@@ -17,21 +19,6 @@ const DEFAULT_CHECK_TIME_INTERVAL = 5;
 const DEFAULT_SUNRISE_TIME = "08:00";
 const DEFAULT_SUNSET_TIME = "20:00";
 
-// Set values if they each have never been set before,
-// such as on first-time startup.
-if (!localStorage.hasOwnProperty(checkTimeStartupOnlyKey)) {
-    localStorage[checkTimeStartupOnlyKey] = DEFAULT_CHECK_TIME_STARTUP_ONLY;
-}
-if (!localStorage.hasOwnProperty(checkTimeIntervalKey)) {
-    localStorage[checkTimeIntervalKey] = DEFAULT_CHECK_TIME_INTERVAL;
-}
-if (!localStorage.hasOwnProperty(sunriseTimeKey)) {
-    localStorage[sunriseTimeKey] = DEFAULT_SUNRISE_TIME;
-}
-if (!localStorage.hasOwnProperty(sunsetTimeKey)) {
-    localStorage[sunsetTimeKey] = DEFAULT_SUNSET_TIME;
-}
-
 // Enable the theme.
 function enableTheme(themeId) {
     browser.management.setEnabled(themeId, true);
@@ -44,8 +31,12 @@ function checkTime() {
     let hours = date.getHours();
     let minutes = date.getMinutes();
 
-    let sunriseSplit = localStorage[sunriseTimeKey].split(":");
-    let sunsetSplit = localStorage[sunsetTimeKey].split(":");
+    // logAllAlarms();
+
+    // console.log("Conducting time check now...");
+
+    let sunriseSplit = localStorage.getItem(sunriseTimeKey).split(":");
+    let sunsetSplit = localStorage.getItem(sunsetTimeKey).split(":");
 
     // Will set the sun theme between sunrise and sunset.
     if (timeInBetween(
@@ -53,14 +44,15 @@ function checkTime() {
             sunriseSplit[0], sunriseSplit[1], 
             sunsetSplit[0], sunsetSplit[1])
         ){
-        enableTheme(localStorage[daytimeThemeKey]);
+        enableTheme(localStorage.getItem(daytimeThemeKey));
     } else {
-        enableTheme(localStorage[nighttimeThemeKey]);
+        enableTheme(localStorage.getItem(nighttimeThemeKey));
     }
 }
 
 // Update the checkTime alarm.
 function updateCheckTime(timeInterval) {
+    browser.alarms.clear('checkTime');
     browser.alarms.onAlarm.removeListener(checkTime);
     browser.alarms.onAlarm.addListener(checkTime);
     browser.alarms.create('checkTime', 
@@ -99,4 +91,15 @@ function timeInBetween(
     }
     // console.log("It is currently nighttime.");
     return false;
+}
+
+// Helper function to get all active alarms.
+function logAllAlarms() {
+    let getAlarms = browser.alarms.getAll();
+    getAlarms.then(function() {
+        console.log('All active alarms: ');
+        for (let alarm of alarms) {
+            console.log(alarm.name);
+        }
+    });
 }
