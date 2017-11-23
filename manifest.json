@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "Time-Based Theme Changer",
-  "version": "1.0.2",
+  "name": "automaticDark - Time-Based Theme Changer",
+  "version": "1.0.3",
   "homepage_url": "https://github.com/skhzhang/time-based-themes/",
   "description": "Automatically change Firefox's theme based on the time.",
 
