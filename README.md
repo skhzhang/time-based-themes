@@ -20,4 +20,4 @@ Feedback and pull requests welcome!
 What do you think? Is there something the extension can be doing better or can be doing that it is currently not?
 
 - [Add a new issue](https://github.com/skhzhang/time-based-themes/issues/new)
-- [Email](simonkhzhang@gmail.com)
+- [Email](mailto:simonkhzhang@gmail.com)
