@@ -1,6 +1,6 @@
 'use strict';
 
-const KEY_PREFIX = 'tbthemesinfo';
+const KEY_PREFIX = 'autodark';
 
 const checkTimeIntervalKey = KEY_PREFIX + "checkTimeInterval";
 const checkTimeStartupOnlyKey = KEY_PREFIX + "checkTimeStartupOnly";
@@ -19,10 +19,31 @@ const DEFAULT_CHECK_TIME_INTERVAL = 5;
 const DEFAULT_SUNRISE_TIME = "08:00";
 const DEFAULT_SUNSET_TIME = "20:00";
 
+function isEmpty(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
+
+function setItem(item) {
+  console.log("Item set to: " + item);
+}
+
+function onError(error) {
+  console.log("Error! " + error);
+}
+
 // Enable the theme.
-function enableTheme(themeId) {
-    browser.management.setEnabled(themeId, true);
-    // console.log("Enabled theme " + themeId);
+function enableTheme(theme) {
+    theme = theme[Object.keys(theme)[0]];
+
+    browser.management.get(theme.themeId)
+        .then(() => {
+            console.log("Enabled theme " + theme.themeId);
+            browser.management.setEnabled(theme.themeId, true);
+        }, onError);
 }
 
 // Check the current system time and set the theme based on the time.
@@ -33,21 +54,43 @@ function checkTime() {
 
     // logAllAlarms();
 
-    // console.log("Conducting time check now...");
+    console.log("Conducting time check now...");
 
-    let sunriseSplit = localStorage.getItem(sunriseTimeKey).split(":");
-    let sunsetSplit = localStorage.getItem(sunsetTimeKey).split(":");
+    let promise1 = browser.storage.local.get(sunriseTimeKey);
+    let promise2 = browser.storage.local.get(sunsetTimeKey);
 
-    // Will set the sun theme between sunrise and sunset.
-    if (timeInBetween(
-            hours, minutes, 
-            sunriseSplit[0], sunriseSplit[1], 
-            sunsetSplit[0], sunsetSplit[1])
-        ){
-        enableTheme(localStorage.getItem(daytimeThemeKey));
-    } else {
-        enableTheme(localStorage.getItem(nighttimeThemeKey));
-    }
+    Promise.all([promise1, promise2])
+        .then((objArr) => {
+            let sunriseSplit = "";
+            let sunsetSplit = "";
+
+            for (let obj of objArr) {
+                if (Object.keys(obj)[0] === sunriseTimeKey) {
+                    console.log(obj);
+                    sunriseSplit = obj[sunriseTimeKey].time.split(":");
+                }
+                else if (Object.keys(obj)[0] === sunsetTimeKey) {
+                    sunsetSplit = obj[sunsetTimeKey].time.split(":");
+                }
+            }
+
+            // Will set the sun theme between sunrise and sunset.
+            // Otherwise, set nighttime theme.
+            if (timeInBetween(
+                    hours, minutes, 
+                    sunriseSplit[0], sunriseSplit[1], 
+                    sunsetSplit[0], sunsetSplit[1])
+                ) {
+                    browser.storage.local.get(daytimeThemeKey)
+                        .then(enableTheme, onError);
+            } else {
+                browser.storage.local.get(nighttimeThemeKey)
+                    .then(enableTheme, onError);
+            }
+
+        }, onError);
+
+
 }
 
 // Update the checkTime alarm.
@@ -55,10 +98,13 @@ function updateCheckTime(timeInterval) {
     browser.alarms.clear('checkTime');
     browser.alarms.onAlarm.removeListener(checkTime);
     browser.alarms.onAlarm.addListener(checkTime);
-    browser.alarms.create('checkTime', 
-        {periodInMinutes: parseInt(localStorage[checkTimeIntervalKey])}
-    );
-    // console.log("Set the alarm interval time to " + localStorage[checkTimeIntervalKey] + " mins.");
+    browser.storage.local.get(checkTimeIntervalKey)
+        .then((obj) => {
+            browser.alarms.create('checkTime',
+                {periodInMinutes: parseInt(obj[checkTimeIntervalKey].periodMin)}
+                );
+            console.log("Set the alarm interval time to " + obj[checkTimeIntervalKey].periodMin + " mins.");
+        }, onError);
 }
 
 // Helper function to figure out if a time is in-between two times.
@@ -96,10 +142,8 @@ function timeInBetween(
 // Helper function to get all active alarms.
 function logAllAlarms() {
     let getAlarms = browser.alarms.getAll();
-    getAlarms.then(function() {
+    getAlarms.then(function(alarms) {
         console.log('All active alarms: ');
-        for (let alarm of alarms) {
-            console.log(alarm.name);
-        }
+        console.log(alarms);
     });
 }

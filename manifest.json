@@ -5,12 +5,19 @@
   "homepage_url": "https://github.com/skhzhang/time-based-themes/",
   "description": "Automatically change Firefox's theme based on the time.",
 
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "automaticDark@simonkhzhang.addons.mozilla.org"
+    }
+  },
+
   "icons": {
   },
 
   "permissions": [
     "alarms",
-    "management"
+    "management",
+    "storage"
   ],
 
   "background": {
