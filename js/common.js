@@ -19,6 +19,17 @@ const DEFAULT_CHECK_TIME_INTERVAL = 5;
 const DEFAULT_SUNRISE_TIME = "08:00";
 const DEFAULT_SUNSET_TIME = "20:00";
 
+// Print what the item was set to.
+function setItem(item) {
+  console.log("Item set to: " + item);
+}
+
+// Print the error!
+function onError(error) {
+  console.log("Error! " + error);
+}
+
+// Check if the object is empty.
 function isEmpty(obj) {
     for(var key in obj) {
         if(obj.hasOwnProperty(key))
@@ -27,18 +38,26 @@ function isEmpty(obj) {
     return true;
 }
 
-function setItem(item) {
-  console.log("Item set to: " + item);
-}
+// Set storage only if overrideDefault is true or
+// the managed storage is empty.
+function setStorage(obj, overrideDefault = false) {
+    //console.log("Setting storage to...");
+    //console.log(obj);
+    return browser.storage.local.get(Object.keys(obj))
+        .then((item) => {
 
-function onError(error) {
-  console.log("Error! " + error);
+            // Only set storage if a value is not already set,
+            // or if it is already empty.
+            if (overrideDefault || isEmpty(item)) {
+                browser.storage.local.set(obj)
+                    .then(() => { console.log("Successfully set " + Object.keys(obj)[0]); }, onError);
+            }
+        }, onError);
 }
 
 // Enable the theme.
 function enableTheme(theme) {
     theme = theme[Object.keys(theme)[0]];
-
     browser.management.get(theme.themeId)
         .then(() => {
             console.log("Enabled theme " + theme.themeId);
@@ -56,23 +75,10 @@ function checkTime() {
 
     console.log("Conducting time check now...");
 
-    let promise1 = browser.storage.local.get(sunriseTimeKey);
-    let promise2 = browser.storage.local.get(sunsetTimeKey);
-
-    Promise.all([promise1, promise2])
-        .then((objArr) => {
-            let sunriseSplit = "";
-            let sunsetSplit = "";
-
-            for (let obj of objArr) {
-                if (Object.keys(obj)[0] === sunriseTimeKey) {
-                    console.log(obj);
-                    sunriseSplit = obj[sunriseTimeKey].time.split(":");
-                }
-                else if (Object.keys(obj)[0] === sunsetTimeKey) {
-                    sunsetSplit = obj[sunsetTimeKey].time.split(":");
-                }
-            }
+    browser.storage.local.get([sunriseTimeKey, sunsetTimeKey])
+        .then((obj) => {
+            let sunriseSplit = obj[sunriseTimeKey].time.split(":");
+            let sunsetSplit = obj[sunsetTimeKey].time.split(":");
 
             // Will set the sun theme between sunrise and sunset.
             // Otherwise, set nighttime theme.
@@ -146,4 +152,80 @@ function logAllAlarms() {
         console.log('All active alarms: ');
         console.log(alarms);
     });
+}
+
+// Set the currently enabled theme
+// as the default daytime/nighttime theme.
+//
+// Set default nighttime theme to Firefox's
+// default if it is available.
+function setDefaultThemes() {
+    // Iterate through each theme.
+    return browser.management.getAll()
+        .then((extensions) => {
+            for (let extension of extensions) {
+                if (extension.type === 'theme') {
+                    if (extension.enabled) {
+                        DEFAULT_DAYTIME_THEME = extension.id;
+                        DEFAULT_NIGHTTIME_THEME = extension.id;
+                    }
+
+                    // If the theme is Firefox's default dark theme,
+                    // set the default nighttime theme to it.
+                    if (extension.id === "firefox-compact-dark@mozilla.org") {
+                        DEFAULT_NIGHTTIME_THEME = extension.id;
+                    }
+                }
+            }
+        })
+}
+
+// Things to do when the extension is starting up.
+function init() {
+    console.log("Starting up...");
+
+    // Set values if they each have never been set before,
+    // such as on first-time startup.
+    setStorage({
+            [checkTimeStartupOnlyKey]: {check: DEFAULT_CHECK_TIME_STARTUP_ONLY},
+            [checkTimeIntervalKey]: {periodMin: DEFAULT_CHECK_TIME_INTERVAL},
+            [sunriseTimeKey]: {time: DEFAULT_SUNRISE_TIME},
+            [sunsetTimeKey]: {time: DEFAULT_SUNSET_TIME}
+        })
+        .then(() => {
+            return setDefaultThemes()
+                .then(() => {
+                    // Set default daytime and nighttime themes
+                    // if they each have never been set before,
+                    // such as on first-time startup.
+                    //
+                    // Only do this after we know the themes that
+                    // the user has installed.
+                    return setStorage({
+                        [daytimeThemeKey]: {themeId: DEFAULT_DAYTIME_THEME},
+                        [nighttimeThemeKey]: {themeId: DEFAULT_NIGHTTIME_THEME}
+                    });
+                })
+                .then(() => {
+                    // On start up, check the time to see what theme to show.
+                    checkTime();
+
+                    // If flag is not set to check only on startup,
+                    // set up an alarm to check this regularlyr
+                    // according to the time interval set.
+                    browser.alarms.onAlarm.addListener(checkTime);
+                    browser.storage.local.get([checkTimeIntervalKey, checkTimeStartupOnlyKey])
+                        .then((obj) => {
+                            if (obj.hasOwnProperty(checkTimeStartupOnlyKey)) {
+                                if (!obj[checkTimeStartupOnlyKey].check) {
+                                    browser.alarms.create(
+                                        'checkTime',
+                                        {periodInMinutes: parseInt(obj[checkTimeIntervalKey].periodMin)}
+                                        );
+                                }
+                            }
+                            logAllAlarms();
+                        }, onError);
+                });
+        });
 }

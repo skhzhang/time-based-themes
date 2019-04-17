@@ -4,8 +4,6 @@ let checkStartupBox = document.getElementById("check-startup-only");
 let sunriseInput = document.getElementById("sunrise-time");
 let sunsetInput = document.getElementById("sunset-time");
 
-//let nighttimeExtList = document.getElementById("nighttime-ext-list");
-
 let daytimeThemeList = document.getElementById("daytime-theme-list");
 let nighttimeThemeList = document.getElementById("nighttime-theme-list");
 let resetDefaultBtn = document.getElementById("reset-default-btn");
@@ -15,17 +13,17 @@ browser.storage.local.get(null)
     .then((results) => {
         console.log(results);
     }, onError);
-
+logAllAlarms();
 
 // Iterate through each extension to populate the dropdowns.
 browser.management.getAll().then((extensions) => {
     for (let extension of extensions) {
-        let extOption = document.createElement('option');
-        extOption.textContent = extension.name;
-        extOption.value = extension.id;
-
         // Add each theme as an option in the dropdowns.
         if (extension.type === 'theme') {
+            let extOption = document.createElement('option');
+            extOption.textContent = extension.name;
+            extOption.value = extension.id;
+
             daytimeThemeList.appendChild(extOption);
             nighttimeThemeList.appendChild(extOption.cloneNode(true));
         }
@@ -49,7 +47,6 @@ browser.management.getAll().then((extensions) => {
                 nighttimeThemeList.value = theme.themeId;
             }
         }, onError);
-
 });
 
 // Set the default value of the input 
@@ -57,6 +54,14 @@ browser.management.getAll().then((extensions) => {
 browser.storage.local.get(checkTimeIntervalKey)
     .then((obj) => {
         alarmIntervalInput.value = parseInt(obj[checkTimeIntervalKey].periodMin);
+    }, onError);
+
+browser.storage.local.get(checkTimeStartupOnlyKey)
+    .then((obj) => {
+        checkStartupBox.checked = obj[checkTimeStartupOnlyKey].check;
+        if (obj[checkTimeStartupOnlyKey].check) {
+            alarmIntervalInput.disabled = true;
+        }
     }, onError);
 
 browser.storage.local.get(sunriseTimeKey)
@@ -69,6 +74,7 @@ browser.storage.local.get(sunsetTimeKey)
         sunsetInput.value = obj[sunsetTimeKey].time;
     }, onError);
 
+// Enable/disable the check on startup-only flag.
 checkStartupBox.addEventListener("input", function(event) {
     if (checkStartupBox.checked) {
         alarmIntervalInput.disabled = true;
@@ -82,7 +88,7 @@ checkStartupBox.addEventListener("input", function(event) {
     }
 });
 
-// Manually check the time and change the theme if appropriate.
+// Manually check the time (and change the theme if appropriate).
 checkTimeBtn.addEventListener("click", function(event) {
     checkTime();
 });
@@ -133,14 +139,21 @@ nighttimeThemeList.addEventListener('change',
 resetDefaultBtn.addEventListener("click", 
     function(event) {
         if (window.confirm("Are you sure you want to reset to default settings?")) {
-            browser.storage.local.clear();
+            browser.storage.local.clear()
+                .then(() => {
+                    checkStartupBox.checked = DEFAULT_CHECK_TIME_STARTUP_ONLY;
+                    alarmIntervalInput.value = DEFAULT_CHECK_TIME_INTERVAL;
+                    sunriseInput.value = DEFAULT_SUNRISE_TIME;
+                    sunsetInput.value = DEFAULT_SUNSET_TIME;
 
-            alarmIntervalInput.value = DEFAULT_CHECK_TIME_INTERVAL;
-            sunriseInput.value = DEFAULT_SUNRISE_TIME;
-            sunsetInput.value = DEFAULT_SUNSET_TIME;
-            daytimeThemeList.value = DEFAULT_DAYTIME_THEME;
-            nighttimeThemeList.value = DEFAULT_NIGHTTIME_THEME;
-            init();
+                    setDefaultThemes()
+                        .then(() => {
+                            daytimeThemeList.value = DEFAULT_DAYTIME_THEME;
+                            nighttimeThemeList.value = DEFAULT_NIGHTTIME_THEME;
+                            init();
+                        });
+                }, onError);
+
         }
     }
 );
