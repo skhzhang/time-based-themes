@@ -1,5 +1,4 @@
 let checkTimeBtn = document.getElementById("check-time-btn");
-let alarmIntervalInput = document.getElementById("alarm-interval");
 let checkStartupBox = document.getElementById("check-startup-only");
 let sunriseInput = document.getElementById("sunrise-time");
 let sunsetInput = document.getElementById("sunset-time");
@@ -11,9 +10,11 @@ let resetDefaultBtn = document.getElementById("reset-default-btn");
 // Log everything stored.
 browser.storage.local.get(null)
     .then((results) => {
+        console.log("automaticDark DEBUG: All stored data:");
         console.log(results);
     }, onError);
 logAllAlarms();
+
 
 // Iterate through each extension to populate the dropdowns.
 browser.management.getAll().then((extensions) => {
@@ -30,7 +31,7 @@ browser.management.getAll().then((extensions) => {
     }
 
     // Set the default value of the dropdowns.
-    browser.storage.local.get(daytimeThemeKey)
+    browser.storage.local.get(DAYTIME_THEME_KEY)
         .then((theme) => {
             theme = theme[Object.keys(theme)[0]];
 
@@ -39,7 +40,7 @@ browser.management.getAll().then((extensions) => {
             }
         }, onError);
 
-    browser.storage.local.get(nighttimeThemeKey)
+    browser.storage.local.get(NIGHTTIME_THEME_KEY)
         .then((theme) => {
             theme = theme[Object.keys(theme)[0]];
 
@@ -49,43 +50,38 @@ browser.management.getAll().then((extensions) => {
         }, onError);
 });
 
-// Set the default value of the input 
-// to match the one in localStorage.
-browser.storage.local.get(checkTimeIntervalKey)
+browser.storage.local.get(CHECK_TIME_STARTUP_ONLY_KEY)
     .then((obj) => {
-        alarmIntervalInput.value = parseInt(obj[checkTimeIntervalKey].periodMin);
+        checkStartupBox.checked = obj[CHECK_TIME_STARTUP_ONLY_KEY].check;
     }, onError);
 
-browser.storage.local.get(checkTimeStartupOnlyKey)
+browser.storage.local.get(SUNRISE_TIME_KEY)
     .then((obj) => {
-        checkStartupBox.checked = obj[checkTimeStartupOnlyKey].check;
-        if (obj[checkTimeStartupOnlyKey].check) {
-            alarmIntervalInput.disabled = true;
-        }
+        sunriseInput.value = obj[SUNRISE_TIME_KEY].time;
     }, onError);
 
-browser.storage.local.get(sunriseTimeKey)
+browser.storage.local.get(SUNSET_TIME_KEY)
     .then((obj) => {
-        sunriseInput.value = obj[sunriseTimeKey].time;
-    }, onError);
-
-browser.storage.local.get(sunsetTimeKey)
-    .then((obj) => {
-        sunsetInput.value = obj[sunsetTimeKey].time;
+        sunsetInput.value = obj[SUNSET_TIME_KEY].time;
     }, onError);
 
 // Enable/disable the check on startup-only flag.
 checkStartupBox.addEventListener("input", function(event) {
     if (checkStartupBox.checked) {
-        alarmIntervalInput.disabled = true;
-        browser.storage.local.set({[checkTimeStartupOnlyKey]: {check: true}});
-        browser.alarms.onAlarm.removeListener(checkTime);
+        browser.storage.local.set({[CHECK_TIME_STARTUP_ONLY_KEY]: {check: true}});
+        Promise.all([
+                browser.alarms.clear(NEXT_SUNRISE_ALARM_NAME),
+                browser.alarms.clear(NEXT_SUNSET_ALARM_NAME)
+            ])
+            .then(() => {
+                logAllAlarms();
+            }, onError);
     }
     else {
-        alarmIntervalInput.disabled = false;
-        browser.storage.local.set({[checkTimeStartupOnlyKey]: {check: false}});
-        updateCheckTime(localStorage[checkTimeIntervalKey]);
-    }
+        browser.storage.local.set({[CHECK_TIME_STARTUP_ONLY_KEY]: {check: false}});
+        createDailyAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME);
+        createDailyAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME);
+}
 });
 
 // Manually check the time (and change the theme if appropriate).
@@ -93,42 +89,50 @@ checkTimeBtn.addEventListener("click", function(event) {
     checkTime();
 });
 
-// Change the alarm interval time.
-alarmIntervalInput.addEventListener("input", function(event) {
-    browser.storage.local.set({[checkTimeIntervalKey]: {periodMin: alarmIntervalInput.value}})
-        .then(() => {
-            updateCheckTime(alarmIntervalInput.value);
-        }, onError);
-    // console.log("Changed the alarm interval time to " + alarmIntervalInput.value);
-});
-
-// Change the sunrise time.
+// Change the sunrise time and check if the current theme should be changed.
+// Also create an alarm if the 'check startup only' flag is disabled.
 sunriseInput.addEventListener("input", function(event) {
-    browser.storage.local.set({[sunriseTimeKey]: {time: sunriseInput.value}})
-        .then(() => {}, onError);
-    // console.log("Changed the sunrise time to " + sunriseInput.value);
+    browser.storage.local.set({[SUNRISE_TIME_KEY]: {time: sunriseInput.value}})
+        .then(() => {
+            checkTime();
+            return browser.storage.local.get(CHECK_TIME_STARTUP_ONLY_KEY)
+        }, onError)
+        .then((obj) => {
+            if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
+                return createDailyAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME);
+            }
+        });
 });
 
-// Change the sunset time.
+// Change the sunset time and check if the current theme should be changed.
 sunsetInput.addEventListener("input", function(event) {
-    browser.storage.local.set({[sunsetTimeKey]: {time: sunsetInput.value}})
-        .then(() => {}, onError);
-    // console.log("Changed the sunset time to " + sunsetInput.value);
+    browser.storage.local.set({[SUNSET_TIME_KEY]: {time: sunsetInput.value}})
+        .then(() => {
+            checkTime();
+            return browser.storage.local.get(CHECK_TIME_STARTUP_ONLY_KEY);
+        }, onError)
+        .then((obj) => {
+            if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
+                return createDailyAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME);
+            }
+        });
 });
 
-// Set the daytime theme.
-daytimeThemeList.addEventListener('change', 
-    function() {
-        browser.storage.local.set({[daytimeThemeKey]: {themeId: this.value}})
-            .then(() => {}, onError);
+// Set the daytime theme and check if the current theme should be changed.
+daytimeThemeList.addEventListener('change', function(event) {
+    browser.storage.local.set({[DAYTIME_THEME_KEY]: {themeId: this.value}})
+        .then(() => {
+            return checkTime();
+        }, onError);
     }
 );
 
-// Set the nighttime theme.
-nighttimeThemeList.addEventListener('change', 
-    function() {
-        browser.storage.local.set({[nighttimeThemeKey]: {themeId: this.value}})
-            .then(() => {}, onError);
+// Set the nighttime theme and check if the current theme should be changed.
+nighttimeThemeList.addEventListener('change', function(event) {
+    browser.storage.local.set({[NIGHTTIME_THEME_KEY]: {themeId: this.value}})
+        .then(() => {
+            return checkTime();
+        }, onError);
     }
 );
 
@@ -139,22 +143,23 @@ nighttimeThemeList.addEventListener('change',
 resetDefaultBtn.addEventListener("click", 
     function(event) {
         if (window.confirm("Are you sure you want to reset to default settings?")) {
-            browser.storage.local.clear()
+            Promise.all([
+                    browser.storage.local.clear(),
+                    browser.alarms.clearAll()
+                ])
                 .then(() => {
                     checkStartupBox.checked = DEFAULT_CHECK_TIME_STARTUP_ONLY;
-                    alarmIntervalInput.value = DEFAULT_CHECK_TIME_INTERVAL;
                     sunriseInput.value = DEFAULT_SUNRISE_TIME;
                     sunsetInput.value = DEFAULT_SUNSET_TIME;
 
-                    setDefaultThemes()
-                        .then(() => {
-                            daytimeThemeList.value = DEFAULT_DAYTIME_THEME;
-                            nighttimeThemeList.value = DEFAULT_NIGHTTIME_THEME;
-                            init();
-                        });
-                }, onError);
+                    return setDefaultThemes();
 
+                }, onError)
+                .then(() => {
+                    daytimeThemeList.value = DEFAULT_DAYTIME_THEME;
+                    nighttimeThemeList.value = DEFAULT_NIGHTTIME_THEME;
+                    return init();
+                });
         }
     }
 );
-
