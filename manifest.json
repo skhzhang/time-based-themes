@@ -1,15 +1,15 @@
 {
-  "manifest_version": 2,
-  "name": "automaticDark - Time-Based Theme Changer",
-  "version": "1.0.5",
-  "homepage_url": "https://github.com/skhzhang/time-based-themes/",
-  "description": "Automatically change Firefox's theme based on the time",
-
   "browser_specific_settings": {
     "gecko": {
-      "id": "automaticDark@simonkhzhang.addons.mozilla.org"
+      "id": "{9ed7d361-ccd9-4cad-9846-977da2651fb5}"
     }
   },
+
+  "manifest_version": 2,
+  "name": "automaticDark - Time-Based Theme Changer",
+  "version": "1.0.6",
+  "homepage_url": "https://github.com/skhzhang/time-based-themes/",
+  "description": "Automatically change Firefox's theme based on the time",
 
   "icons": {
   },
