@@ -82,7 +82,7 @@ function createDailyAlarm(timeKey, alarmName) {
             })
          }, onError)
         .then(() => {
-            logAllAlarms();
+            //logAllAlarms();
         }, onError);
 }
 
@@ -223,13 +223,20 @@ function setDefaultThemes() {
 // Set storage only if overrideDefault is true or
 // the managed storage is empty.
 function setStorage(obj, overrideDefault = false) {
+    //console.log(obj);
     return browser.storage.local.get(Object.keys(obj))
-        .then((item) => {
+        .then((items) => {
             // Only set storage if a value is not already set,
             // or if it is already empty.
-            if (overrideDefault || isEmpty(item)) {
-                browser.storage.local.set(obj)
-                    .then(() => { console.log("Successfully set " + Object.keys(obj)[0]); }, onError);
+            if (overrideDefault || isEmpty(items)) {
+                return browser.storage.local.set(obj)
+                    .then(() => { 
+                        /*
+                        for (let item in obj) {
+                            console.log("automaticDark DEBUG: Successfully set " + item); 
+                        }
+                        */
+                    }, onError);
             }
         }, onError);
 }

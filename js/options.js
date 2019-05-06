@@ -1,4 +1,3 @@
-let checkTimeBtn = document.getElementById("check-time-btn");
 let checkStartupBox = document.getElementById("check-startup-only");
 let sunriseInput = document.getElementById("sunrise-time");
 let sunsetInput = document.getElementById("sunset-time");
@@ -7,14 +6,15 @@ let daytimeThemeList = document.getElementById("daytime-theme-list");
 let nighttimeThemeList = document.getElementById("nighttime-theme-list");
 let resetDefaultBtn = document.getElementById("reset-default-btn");
 
+/*
 // Log everything stored.
 browser.storage.local.get(null)
     .then((results) => {
         console.log("automaticDark DEBUG: All stored data:");
         console.log(results);
     }, onError);
-logAllAlarms();
-
+// logAllAlarms();
+*/
 
 // Iterate through each extension to populate the dropdowns.
 browser.management.getAll().then((extensions) => {
@@ -82,11 +82,6 @@ checkStartupBox.addEventListener("input", function(event) {
         createDailyAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME);
         createDailyAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME);
 }
-});
-
-// Manually check the time (and change the theme if appropriate).
-checkTimeBtn.addEventListener("click", function(event) {
-    checkTime();
 });
 
 // Change the sunrise time and check if the current theme should be changed.
