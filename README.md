@@ -9,6 +9,9 @@ Set Firefox to change the UI to a dark theme during the night and change back to
 - Set the sunrise and sunset times
 - Choose the daytime theme and nighttime theme to switch between
 
+## Notes
+- Per [#5][issue5], if you have the `privacy.resistFingerprinting` flag in about:config set to `True`, the extension will not be able to detect your timezone. You would need to make an adjustment in your settings to compensate for this.
+
 ## Screenshots
 ![Options page in version 1.0.2](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/time-based-theme-changer-options-1.0.2.png)
 - Screenshot of the Options page in version 1.0.2.
@@ -20,3 +23,5 @@ What do you think? Is there something the extension can be doing better or can b
 
 - [Add a new issue](https://github.com/skhzhang/time-based-themes/issues/new)
 - [Email](mailto:simonkhzhang@gmail.com)
+
+[issue5]: https://github.com/skhzhang/time-based-themes/issues/5
