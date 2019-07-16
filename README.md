@@ -8,7 +8,6 @@ Set Firefox to change the UI to a dark theme during the night and change back to
 ## Features
 - Set the sunrise and sunset times
 - Choose the daytime theme and nighttime theme to switch between
-- Set how often you would like the extension to check the current time
 
 ## Screenshots
 ![Options page in version 1.0.2](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/time-based-theme-changer-options-1.0.2.png)

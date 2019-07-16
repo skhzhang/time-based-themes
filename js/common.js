@@ -54,6 +54,7 @@ function init() {
         .then((obj) => {
             if (obj.hasOwnProperty(CHECK_TIME_STARTUP_ONLY_KEY)) { // This may not be necessary
                 if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
+
                     // Every time the window is focused, check the time and reset the alarms.
                     // This prevents any delay in the alarms after OS sleep/hibernation.
                     browser.windows.onFocusChanged.addListener((windowId) => {
@@ -64,6 +65,7 @@ function init() {
                             createDailyAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME)
                         }
                     });
+
                     return Promise.all([
                             createDailyAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME),
                             createDailyAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME)
@@ -118,7 +120,7 @@ function alarmListener(alarmInfo) {
 // Will set the daytime theme between sunrise and sunset.
 // Otherwise, set nighttime theme.
 function checkTime() {
-    let date = new Date();
+    let date = new Date(Date.now());
     let hours = date.getHours();
     let minutes = date.getMinutes();
     //console.log("It is currently: " + hours + ":" + minutes + ". Conducting time check now...");
