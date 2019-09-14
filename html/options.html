@@ -13,6 +13,15 @@
     </header>
     <section id="settings">
         <h1>Settings</h1>
+
+        <p>
+            <input type="radio" id="automatic-suntimes-radio" name="set-suntimes" value="automatic-suntimes">
+            <label for="automatic-suntimes">Automatically set sunrise/sunset times (requires geolocation)</label>
+        </p>
+        <p>
+            <input type="radio" id="manual-suntimes-radio" name="set-suntimes" value="manual-suntimes">
+            <label for="manual-suntimes">Manually set sunrise/sunset times</label>
+        </p>
         <p>
             <label for="sunrise-time">Sunrise time: </label>
             <input id="sunrise-time" type="time">

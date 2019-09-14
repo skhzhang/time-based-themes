@@ -1,9 +1,13 @@
+let automaticSuntimesRadio = document.getElementById("automatic-suntimes-radio");
+let manualSuntimesRadio = document.getElementById("manual-suntimes-radio");
+
 let checkStartupBox = document.getElementById("check-startup-only");
 let sunriseInput = document.getElementById("sunrise-time");
 let sunsetInput = document.getElementById("sunset-time");
 
 let daytimeThemeList = document.getElementById("daytime-theme-list");
 let nighttimeThemeList = document.getElementById("nighttime-theme-list");
+let geolocationBtn = document.getElementById("geolocation-btn");
 let resetDefaultBtn = document.getElementById("reset-default-btn");
 
 /*
@@ -73,20 +77,41 @@ browser.management.getAll().then((extensions) => {
         }, onError);
 });
 
+browser.storage.local.get(AUTOMATIC_SUNTIMES_KEY)
+    .then((obj) => {
+        automaticSuntimesRadio.checked = obj[AUTOMATIC_SUNTIMES_KEY].check;
+        sunriseInput.disabled = obj[AUTOMATIC_SUNTIMES_KEY].check;
+        sunsetInput.disabled = obj[AUTOMATIC_SUNTIMES_KEY].check;
+        manualSuntimesRadio.checked = !obj[AUTOMATIC_SUNTIMES_KEY].check;
+
+    }, onError);
+
 browser.storage.local.get(CHECK_TIME_STARTUP_ONLY_KEY)
     .then((obj) => {
         checkStartupBox.checked = obj[CHECK_TIME_STARTUP_ONLY_KEY].check;
     }, onError);
 
-browser.storage.local.get(SUNRISE_TIME_KEY)
+browser.storage.local.get([SUNRISE_TIME_KEY, SUNSET_TIME_KEY])
     .then((obj) => {
         sunriseInput.value = obj[SUNRISE_TIME_KEY].time;
-    }, onError);
-
-browser.storage.local.get(SUNSET_TIME_KEY)
-    .then((obj) => {
         sunsetInput.value = obj[SUNSET_TIME_KEY].time;
     }, onError);
+
+automaticSuntimesRadio.addEventListener("input", function(event) {
+    if (automaticSuntimesRadio.checked) {
+        browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: true}});
+        sunriseInput.disabled = true;
+        sunsetInput.disabled = true;
+    }
+});
+
+manualSuntimesRadio.addEventListener("input", function(event) {
+    if (manualSuntimesRadio.checked) {
+        browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: false}});
+        sunriseInput.disabled = false;
+        sunsetInput.disabled = false;
+    }
+});
 
 // Enable/disable the check on startup-only flag.
 checkStartupBox.addEventListener("input", function(event) {

@@ -2,6 +2,7 @@
 
 const KEY_PREFIX = 'autodark';
 
+const AUTOMATIC_SUNTIMES_KEY = KEY_PREFIX + "automaticSuntimes";
 const CHECK_TIME_STARTUP_ONLY_KEY = KEY_PREFIX + "checkTimeStartupOnly";
 const DAYTIME_THEME_KEY = KEY_PREFIX + "daytimeTheme";
 const NIGHTTIME_THEME_KEY = KEY_PREFIX + "nighttimeTheme";
@@ -10,6 +11,7 @@ const SUNSET_TIME_KEY = KEY_PREFIX + "sunsetTime";
 const NEXT_SUNRISE_ALARM_NAME = KEY_PREFIX + "nextSunrise";
 const NEXT_SUNSET_ALARM_NAME = KEY_PREFIX + "nextSunset";
 
+const DEFAULT_AUTOMATIC_SUNTIMES = false;
 const DEFAULT_CHECK_TIME_STARTUP_ONLY = false;
 const DEFAULT_SUNRISE_TIME = "08:00";
 const DEFAULT_SUNSET_TIME = "20:00";
@@ -27,6 +29,7 @@ function init() {
     // Set values if they each have never been set before,
     // such as on first-time startup.
     return setStorage({
+            [AUTOMATIC_SUNTIMES_KEY]: {check: DEFAULT_AUTOMATIC_SUNTIMES},
             [CHECK_TIME_STARTUP_ONLY_KEY]: {check: DEFAULT_CHECK_TIME_STARTUP_ONLY},
             [SUNRISE_TIME_KEY]: {time: DEFAULT_SUNRISE_TIME},
             [SUNSET_TIME_KEY]: {time: DEFAULT_SUNSET_TIME}
@@ -119,6 +122,8 @@ function alarmListener(alarmInfo) {
 // Check the current system time and set the theme based on the time.
 // Will set the daytime theme between sunrise and sunset.
 // Otherwise, set nighttime theme.
+
+// Can split this function to be more generic. Make function enableTime happen as a parameter.
 function checkTime() {
     let date = new Date(Date.now());
     let hours = date.getHours();
@@ -203,6 +208,18 @@ function setDefaultThemes() {
 
 
 
+function getSuntimesFromGeolocation() {
+    if (!navigator.geolocation) {
+        console.log('Geolocation is not supported by your browser');
+    } else {
+        console.log('Locating…');
+        navigator.geolocation.getCurrentPosition(() => {
+            const latitude  = position.coords.latitude;
+            const longitude = position.coords.longitude;
 
+            return SunCalc.getTimes(Date.now(), latitude, longitude);
+        }, () => {
+            console.log("Unable to fetch current location.");
+        });
     }
 }
