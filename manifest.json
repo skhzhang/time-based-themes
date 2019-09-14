@@ -21,7 +21,7 @@
   ],
 
   "background": {
-    "scripts": ["js/common.js", "js/background.js"]
+    "scripts": ["js/utils.js", "js/common.js", "js/background.js", "lib/suncalc.js"]
   },
 
   "options_ui": {

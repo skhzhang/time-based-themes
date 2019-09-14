@@ -84,7 +84,8 @@ checkStartupBox.addEventListener("input", function(event) {
 }
 });
 
-// Change the sunrise time and check if the current theme should be changed.
+// If the sunrise time input is changed,
+// change the sunrise time and check if the current theme should be changed.
 // Also create an alarm if the 'check startup only' flag is disabled.
 sunriseInput.addEventListener("input", function(event) {
     browser.storage.local.set({[SUNRISE_TIME_KEY]: {time: sunriseInput.value}})
@@ -99,7 +100,8 @@ sunriseInput.addEventListener("input", function(event) {
         });
 });
 
-// Change the sunset time and check if the current theme should be changed.
+// If the sunset time input is changed,
+// change the sunset time and check if the current theme should be changed.
 sunsetInput.addEventListener("input", function(event) {
     browser.storage.local.set({[SUNSET_TIME_KEY]: {time: sunsetInput.value}})
         .then(() => {
@@ -113,7 +115,8 @@ sunsetInput.addEventListener("input", function(event) {
         });
 });
 
-// Set the daytime theme and check if the current theme should be changed.
+// If the dropdown for daytime themes is changed,
+// set the daytime theme and check if the current theme should be changed.
 daytimeThemeList.addEventListener('change', function(event) {
     browser.storage.local.set({[DAYTIME_THEME_KEY]: {themeId: this.value}})
         .then(() => {
@@ -122,7 +125,8 @@ daytimeThemeList.addEventListener('change', function(event) {
     }
 );
 
-// Set the nighttime theme and check if the current theme should be changed.
+// If the dropdown for nighttime themes is changed,
+// set the nighttime theme and check if the current theme should be changed.
 nighttimeThemeList.addEventListener('change', function(event) {
     browser.storage.local.set({[NIGHTTIME_THEME_KEY]: {themeId: this.value}})
         .then(() => {
