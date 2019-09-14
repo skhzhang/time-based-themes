@@ -16,6 +16,29 @@ browser.storage.local.get(null)
 // logAllAlarms();
 */
 
+// Darken the page theme if the current theme is 
+// Firefox's default dark theme.
+browser.management.get("firefox-compact-dark@mozilla.org")
+    .then((extInfo) => {
+        if (extInfo.enabled) {
+            document.getElementsByTagName("body")[0].className = "night"; 
+        }
+        else {
+            document.getElementsByTagName("body")[0].className = "day";
+        }
+    });
+
+// If the current theme changes to Firefox's default dark theme,
+// darken the Options page.
+browser.management.onEnabled.addListener((ext) => {
+    if (ext.id === "firefox-compact-dark@mozilla.org") {
+        document.getElementsByTagName("body")[0].className = "night"; 
+    }
+    else if (ext.type === "theme") {
+        document.getElementsByTagName("body")[0].className = "day";
+    }
+})
+
 // Iterate through each extension to populate the dropdowns.
 browser.management.getAll().then((extensions) => {
     for (let extension of extensions) {
