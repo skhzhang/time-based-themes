@@ -5,13 +5,14 @@
     <title>automaticDark Options</title>
     <link href="../css/options.css" rel="stylesheet" type="text/css">
 </head>
-<body>
+<body class="night">
     <header>
         <h1>
-            automaticDark 1.0.7 Options
+            automaticDark Options
         </h1>
     </header>
-    <section>
+    <section id="settings">
+        <h1>Settings</h1>
         <p>
             <label for="sunrise-time">Sunrise time: </label>
             <input id="sunrise-time" type="time">
@@ -37,6 +38,27 @@
         </p>
         <p>
             <button id="reset-default-btn">Reset Settings to Default</button>
+        </p>
+    </section>
+    <section id="about">
+        <h1>About</h1>
+        <p>
+            automaticDark 1.0.7 by <a href="http://simonkhzhang.me">Simon Zhang</a>
+            <ul>
+                <li><a href="https://addons.mozilla.org/en-US/firefox/addon/automatic-dark/">Firefox Add-ons</a></li>
+                <li><a href="https://github.com/skhzhang/time-based-themes">Github</a></li>
+                <li>
+                    Support - Bugs, suggestions, feedback
+                    <ul>
+                        <li>
+                            <a href="https://github.com/skhzhang/time-based-themes/issues/new">Log an issue</a> (requires Github account)
+                        </li>
+                        <li>
+                            <a href="mailto:simonkhzhang@gmail.com">Email me</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
         </p>
     </section>
     <script type="text/javascript" src="../js/common.js"></script>

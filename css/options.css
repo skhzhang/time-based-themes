@@ -12,5 +12,13 @@ header {
 }
 
 section {
-    padding: 0.5em 5em;
+	padding: 0.5em 5em;
+}
+
+.night {
+    background-color: #2a2a2e;
+    color: rgba(249, 249, 250, 0.8);
+}
+.night a {
+    color: #45A1FF;
 }
