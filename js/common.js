@@ -64,14 +64,14 @@ function init() {
                         if (windowId !== browser.windows.WINDOW_ID_NONE) {
                             checkTime();
                             browser.alarms.clearAll();
-                            createDailyAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME),
-                            createDailyAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME)
+                            createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
+                            createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
                         }
                     });
 
                     return Promise.all([
-                            createDailyAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME),
-                            createDailyAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME)
+                            createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
+                            createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
                         ]);
                 }
             }
@@ -81,7 +81,7 @@ function init() {
 // Creates an alarm based on a key used to get 
 // a String in the 24h format 
 // "HH:MM" and an alarm name.
-function createDailyAlarm(timeKey, alarmName) {
+function createAlarm(timeKey, alarmName, periodInMinutes = null) {
     return browser.storage.local.get([
             CHECK_TIME_STARTUP_ONLY_KEY,
             timeKey
@@ -90,7 +90,6 @@ function createDailyAlarm(timeKey, alarmName) {
             let timeSplit = obj[timeKey].time.split(":");
 
             const when = convertToNextMilliEpoch(timeSplit[0], timeSplit[1]);
-            const periodInMinutes = 60 * 24;
             return browser.alarms.create(alarmName, {
                 when,
                 periodInMinutes
@@ -208,18 +207,21 @@ function setDefaultThemes() {
 
 // Given a date, get the geolocation and return a promise
 // with the sunrise/sunset times.
-function getSuntimesFromGeolocation(date) {
+function getSuncalcFromGeolocation(dates) {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-            reject('Geolocation is not supported by your browser');
+            reject('Geolocation is not supported by your browser.');
         } else {
             navigator.geolocation.getCurrentPosition((position) => {
                 const latitude  = position.coords.latitude;
                 const longitude = position.coords.longitude;
+                let result = [];
 
-                let result = SunCalc.getTimes(date, latitude, longitude);
+                dates.forEach((date) => {
+                    result.push(SunCalc.getTimes(date, latitude, longitude));
+                });
 
-                resolve({sunrise: result.sunrise, sunset: result.sunset});
+                resolve(result);
             }, () => {
                 reject("Unable to fetch current location.");
             });
@@ -227,3 +229,29 @@ function getSuntimesFromGeolocation(date) {
     });
 }
 
+function calculateSuntimes() {
+    let today = new Date(Date.now());
+    let tomorrow =  new Date(Date.now());
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Find the next sunrise and sunset date/time.
+    return getSuncalcFromGeolocation([today, tomorrow]).then((results) => {
+
+        let now = new Date(Date.now());
+        let nextSunrise = new Date(results[0].sunrise);
+        let nextSunset = new Date(results[0].sunset);
+        nextSunrise.setDate(nextSunrise.getDate() + 10);
+        nextSunset.setDate(nextSunset.getDate() + 10);
+
+        results.forEach((result) => {
+            if (now < result.sunrise && result.sunrise < nextSunrise) {
+                nextSunrise = result.sunrise;
+            }
+            if (now < result.sunset && result.sunset < nextSunset) {
+                nextSunset = result.sunset;
+            }
+        });
+
+        return {nextSunrise: nextSunrise, nextSunset: nextSunset};
+    }, onError);
+}
