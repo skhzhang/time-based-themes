@@ -12,6 +12,7 @@ let resetDefaultBtn = document.getElementById("reset-default-btn");
 
 let sunriseInputEvent = new Event("input");
 let sunsetInputEvent = new Event("input");
+
 /*
 // Log everything stored.
 browser.storage.local.get(null)
@@ -82,10 +83,9 @@ browser.management.getAll().then((extensions) => {
 browser.storage.local.get(AUTOMATIC_SUNTIMES_KEY)
     .then((obj) => {
         automaticSuntimesRadio.checked = obj[AUTOMATIC_SUNTIMES_KEY].check;
+        manualSuntimesRadio.checked = !obj[AUTOMATIC_SUNTIMES_KEY].check;
         sunriseInput.disabled = obj[AUTOMATIC_SUNTIMES_KEY].check;
         sunsetInput.disabled = obj[AUTOMATIC_SUNTIMES_KEY].check;
-        manualSuntimesRadio.checked = !obj[AUTOMATIC_SUNTIMES_KEY].check;
-
     }, onError);
 
 browser.storage.local.get(CHECK_TIME_STARTUP_ONLY_KEY)
@@ -105,7 +105,10 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
         sunriseInput.disabled = true;
         sunsetInput.disabled = true;
 
-        getSuntimesFromGeolocation((suntimes) => {
+        let date = Date.now();
+
+        getSuntimesFromGeolocation(date)
+            .then((suntimes) => {
             let sunriseHours = suntimes.sunrise.getHours();
             let sunriseMinutes = suntimes.sunrise.getMinutes();
             let sunsetHours = suntimes.sunset.getHours();
@@ -115,7 +118,7 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
             sunsetInput.value = addLeadZero(sunsetHours) + ":" + addLeadZero(sunsetMinutes);
             sunriseInput.dispatchEvent(sunriseInputEvent);
             sunsetInput.dispatchEvent(sunsetInputEvent);
-        });
+        }, onError);
     }
 });
 
@@ -209,6 +212,11 @@ resetDefaultBtn.addEventListener("click",
                     browser.alarms.clearAll()
                 ])
                 .then(() => {
+                    automaticSuntimesRadio.checked = DEFAULT_AUTOMATIC_SUNTIMES;
+                    manualSuntimesRadio.checked = !DEFAULT_AUTOMATIC_SUNTIMES;
+                    sunriseInput.disabled = DEFAULT_AUTOMATIC_SUNTIMES;
+                    sunsetInput.disabled = DEFAULT_AUTOMATIC_SUNTIMES;
+
                     checkStartupBox.checked = DEFAULT_CHECK_TIME_STARTUP_ONLY;
                     sunriseInput.value = DEFAULT_SUNRISE_TIME;
                     sunsetInput.value = DEFAULT_SUNSET_TIME;

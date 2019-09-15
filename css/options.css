@@ -11,8 +11,14 @@ header {
     padding: 0 5em;
 }
 
-section {
-	padding: 0.5em 5em;
+section {\
+    max-width: 1000px;
+    padding: 0.5em 5em;
+}
+
+.divider {
+    border-top: 1px solid #ccc;
+    margin: 1.5em 5em;
 }
 
 .night {
