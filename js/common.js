@@ -206,18 +206,18 @@ function setDefaultThemes() {
         })
 }
 
-
-
-function getSuntimesFromGeolocation() {
+function getSuntimesFromGeolocation(callback) {
     if (!navigator.geolocation) {
         console.log('Geolocation is not supported by your browser');
     } else {
         console.log('Locating…');
-        navigator.geolocation.getCurrentPosition(() => {
+        navigator.geolocation.getCurrentPosition((position) => {
             const latitude  = position.coords.latitude;
             const longitude = position.coords.longitude;
 
-            return SunCalc.getTimes(Date.now(), latitude, longitude);
+            let result = SunCalc.getTimes(Date.now(), latitude, longitude);
+
+            callback({sunrise: result.sunrise, sunset: result.sunset});
         }, () => {
             console.log("Unable to fetch current location.");
         });

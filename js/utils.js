@@ -28,6 +28,15 @@ function timeInBetween(
     return false;
 }
 
+function addLeadZero (num){
+    if (num < 10) {
+        return "0" + num;
+    }
+    else {
+        return num;
+    }
+}
+
 // Helper:
 // Set storage only if overrideDefault is true or
 // the managed storage is empty.

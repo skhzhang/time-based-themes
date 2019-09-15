@@ -10,6 +10,8 @@ let nighttimeThemeList = document.getElementById("nighttime-theme-list");
 let geolocationBtn = document.getElementById("geolocation-btn");
 let resetDefaultBtn = document.getElementById("reset-default-btn");
 
+let sunriseInputEvent = new Event("input");
+let sunsetInputEvent = new Event("input");
 /*
 // Log everything stored.
 browser.storage.local.get(null)
@@ -102,6 +104,18 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
         browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: true}});
         sunriseInput.disabled = true;
         sunsetInput.disabled = true;
+
+        getSuntimesFromGeolocation((suntimes) => {
+            let sunriseHours = suntimes.sunrise.getHours();
+            let sunriseMinutes = suntimes.sunrise.getMinutes();
+            let sunsetHours = suntimes.sunset.getHours();
+            let sunsetMinutes = suntimes.sunset.getMinutes();
+
+            sunriseInput.value = addLeadZero(sunriseHours) + ":" + addLeadZero(sunriseMinutes);
+            sunsetInput.value = addLeadZero(sunsetHours) + ":" + addLeadZero(sunsetMinutes);
+            sunriseInput.dispatchEvent(sunriseInputEvent);
+            sunsetInput.dispatchEvent(sunsetInputEvent);
+        });
     }
 });
 
