@@ -48,13 +48,7 @@ function setStorage(obj, overrideDefault = false) {
             // or if it is already empty.
             if (overrideDefault || isEmpty(items)) {
                 return browser.storage.local.set(obj)
-                    .then(() => { 
-                        /*
-                        for (let item in obj) {
-                            console.log("automaticDark DEBUG: Successfully set " + item); 
-                        }
-                        */
-                    }, onError);
+                    .then(() => {}, onError);
             }
         }, onError);
 }

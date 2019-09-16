@@ -20,8 +20,8 @@ browser.storage.local.get(null)
         console.log("automaticDark DEBUG: All stored data:");
         console.log(results);
     }, onError);
-// logAllAlarms();
 */
+// logAllAlarms();
 
 // Darken the page theme if the current theme is 
 // Firefox's default dark theme.
@@ -101,24 +101,33 @@ browser.storage.local.get([SUNRISE_TIME_KEY, SUNSET_TIME_KEY])
 
 automaticSuntimesRadio.addEventListener("input", function(event) {
     if (automaticSuntimesRadio.checked) {
-        browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: true}});
-        sunriseInput.disabled = true;
-        sunsetInput.disabled = true;
 
-        let date = Date.now();
-
-        getSuntimesFromGeolocation(date)
+        // Prompt for and set the user's geolocation in storage.
+        setGeolocation()
+            .then(
+                // Calculate sunrise/sunset times based on location.
+                calculateSuntimes, 
+                onError)
             .then((suntimes) => {
-            let sunriseHours = suntimes.sunrise.getHours();
-            let sunriseMinutes = suntimes.sunrise.getMinutes();
-            let sunsetHours = suntimes.sunset.getHours();
-            let sunsetMinutes = suntimes.sunset.getMinutes();
+                // Make changes to settings based on calculation results.
+                let sunriseHours = suntimes.nextSunrise.getHours();
+                let sunriseMinutes = suntimes.nextSunrise.getMinutes();
+                let sunsetHours = suntimes.nextSunset.getHours();
+                let sunsetMinutes = suntimes.nextSunset.getMinutes();
 
-            sunriseInput.value = addLeadZero(sunriseHours) + ":" + addLeadZero(sunriseMinutes);
-            sunsetInput.value = addLeadZero(sunsetHours) + ":" + addLeadZero(sunsetMinutes);
-            sunriseInput.dispatchEvent(sunriseInputEvent);
-            sunsetInput.dispatchEvent(sunsetInputEvent);
-        }, onError);
+                browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: true}});
+                sunriseInput.disabled = true;
+                sunsetInput.disabled = true;
+
+                sunriseInput.value = addLeadZero(sunriseHours) + ":" + addLeadZero(sunriseMinutes);
+                sunsetInput.value = addLeadZero(sunsetHours) + ":" + addLeadZero(sunsetMinutes);
+                sunriseInput.dispatchEvent(sunriseInputEvent);
+                sunsetInput.dispatchEvent(sunsetInputEvent);
+            }, (error) => {
+                onError(error);
+                automaticSuntimesRadio.checked = false;
+                manualSuntimesRadio.checked = true;
+        });
     }
 });
 
@@ -144,8 +153,8 @@ checkStartupBox.addEventListener("input", function(event) {
     }
     else {
         browser.storage.local.set({[CHECK_TIME_STARTUP_ONLY_KEY]: {check: false}});
-        createDailyAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME);
-        createDailyAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME);
+        createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24);
+        createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24);
 }
 });
 
@@ -160,7 +169,7 @@ sunriseInput.addEventListener("input", function(event) {
         }, onError)
         .then((obj) => {
             if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
-                return createDailyAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME);
+                return createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24);
             }
         });
 });
@@ -175,7 +184,7 @@ sunsetInput.addEventListener("input", function(event) {
         }, onError)
         .then((obj) => {
             if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
-                return createDailyAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME);
+                return createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24);
             }
         });
 });

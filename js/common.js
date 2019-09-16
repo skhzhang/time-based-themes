@@ -11,6 +11,9 @@ const SUNSET_TIME_KEY = KEY_PREFIX + "sunsetTime";
 const NEXT_SUNRISE_ALARM_NAME = KEY_PREFIX + "nextSunrise";
 const NEXT_SUNSET_ALARM_NAME = KEY_PREFIX + "nextSunset";
 
+const GEOLOCATION_LATITUDE_KEY = KEY_PREFIX + "geoLatitude";
+const GEOLOCATION_LONGITUDE_KEY = KEY_PREFIX + "geoLongitude";
+
 const DEFAULT_AUTOMATIC_SUNTIMES = false;
 const DEFAULT_CHECK_TIME_STARTUP_ONLY = false;
 const DEFAULT_SUNRISE_TIME = "08:00";
@@ -108,6 +111,31 @@ function alarmListener(alarmInfo) {
     if (alarmInfo.name === NEXT_SUNRISE_ALARM_NAME) {
         return browser.storage.local.get(DAYTIME_THEME_KEY)
             .then(enableTheme, onError);
+        /*
+        return browser.storage.local.get([
+                    AUTOMATIC_SUNTIMES_KEY,
+                    DAYTIME_THEME_KEY
+                ])
+
+            .then((obj) => {
+                
+                if (obj[AUTOMATIC_SUNTIMES_KEY].check) {
+
+                    calculateSuntimes()
+                        .then((suntimes) => {
+                            const when = suntimes.nextSunrise - Date.now();
+                            console.log(when);
+                            browser.alarms.create(NEXT_SUNRISE_ALARM_NAME, {
+                                when
+                            });
+                            logAllAlarms();
+                        });
+                }
+                console.log("done1");
+                enableTheme(obj[DAYTIME_THEME_KEY]);
+            }
+            , onError);
+                */
     }
     else if (alarmInfo.name === NEXT_SUNSET_ALARM_NAME) {
         return browser.storage.local.get(NIGHTTIME_THEME_KEY)
@@ -144,7 +172,6 @@ function checkTime() {
                 browser.storage.local.get(NIGHTTIME_THEME_KEY)
                     .then(enableTheme, onError);
             }
-
         }, onError);
 }
 
@@ -194,7 +221,6 @@ function setDefaultThemes() {
                         DEFAULT_DAYTIME_THEME = extension.id;
                         DEFAULT_NIGHTTIME_THEME = extension.id;
                     }
-
                     // If the theme is Firefox's default dark theme,
                     // set the default nighttime theme to it.
                     if (extension.id === "firefox-compact-dark@mozilla.org") {
@@ -205,53 +231,64 @@ function setDefaultThemes() {
         })
 }
 
-// Given a date, get the geolocation and return a promise
-// with the sunrise/sunset times.
-function getSuncalcFromGeolocation(dates) {
+// Prompt user to give location. Then store it.
+function setGeolocation() {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
             reject('Geolocation is not supported by your browser.');
         } else {
             navigator.geolocation.getCurrentPosition((position) => {
-                const latitude  = position.coords.latitude;
-                const longitude = position.coords.longitude;
-                let result = [];
-
-                dates.forEach((date) => {
-                    result.push(SunCalc.getTimes(date, latitude, longitude));
-                });
-
-                resolve(result);
-            }, () => {
+                    setStorage({
+                        [GEOLOCATION_LATITUDE_KEY]: {latitude: position.coords.latitude},
+                        [GEOLOCATION_LONGITUDE_KEY]: {longitude: position.coords.longitude}
+                    });
+                    resolve();
+                }, () => {
                 reject("Unable to fetch current location.");
             });
         }
     });
 }
 
+// Calculate the next sunrise/sunset times
+// based on today's date,.tomorrow's date, and geolocation in storage.
 function calculateSuntimes() {
-    let today = new Date(Date.now());
-    let tomorrow =  new Date(Date.now());
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    return browser.storage.local.get([GEOLOCATION_LATITUDE_KEY, GEOLOCATION_LONGITUDE_KEY])
+        .then((position) => {
 
-    // Find the next sunrise and sunset date/time.
-    return getSuncalcFromGeolocation([today, tomorrow]).then((results) => {
+            // Prepare today and tomorrow's date for calculations.
+            let today = new Date(Date.now());
+            let tomorrow =  new Date(Date.now());
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            let dates = [today, tomorrow];
 
-        let now = new Date(Date.now());
-        let nextSunrise = new Date(results[0].sunrise);
-        let nextSunset = new Date(results[0].sunset);
-        nextSunrise.setDate(nextSunrise.getDate() + 10);
-        nextSunset.setDate(nextSunset.getDate() + 10);
+            let results = [];
+            dates.forEach((date) => {
+                results.push(
+                    // Do the calculations using SunCalc.
+                    // Figure out today and tomorrow's sunrise/sunset times.
+                    SunCalc.getTimes(date, 
+                        position[GEOLOCATION_LATITUDE_KEY].latitude, 
+                        position[GEOLOCATION_LONGITUDE_KEY].longitude)
+                );
+            });
 
-        results.forEach((result) => {
-            if (now < result.sunrise && result.sunrise < nextSunrise) {
-                nextSunrise = result.sunrise;
-            }
-            if (now < result.sunset && result.sunset < nextSunset) {
-                nextSunset = result.sunset;
-            }
-        });
+            let now = new Date(Date.now());
+            let nextSunrise = new Date(results[0].sunrise);
+            let nextSunset = new Date(results[0].sunset);
+            nextSunrise.setDate(nextSunrise.getDate() + 10);
+            nextSunset.setDate(nextSunset.getDate() + 10);
 
-        return {nextSunrise: nextSunrise, nextSunset: nextSunset};
-    }, onError);
+            // Figure out whether today or tomorrow's sunrise/sunset time should be used.
+            results.forEach((result) => {
+                if (now < result.sunrise && result.sunrise < nextSunrise) {
+                    nextSunrise = result.sunrise;
+                }
+                if (now < result.sunset && result.sunset < nextSunset) {
+                    nextSunset = result.sunset;
+                }
+            });
+
+            return {nextSunrise: nextSunrise, nextSunset: nextSunset};
+        }, onError);
 }
