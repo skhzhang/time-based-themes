@@ -55,27 +55,44 @@ function init() {
             // If flag is not set to check only on startup,
             // create alarms to change the theme in the future.
             browser.alarms.onAlarm.addListener(alarmListener);
-            return browser.storage.local.get([CHECK_TIME_STARTUP_ONLY_KEY]);
+            return browser.storage.local.get([CHECK_TIME_STARTUP_ONLY_KEY, AUTOMATIC_SUNTIMES_KEY]);
         }, onError)
         .then((obj) => {
-            if (obj.hasOwnProperty(CHECK_TIME_STARTUP_ONLY_KEY)) { // This may not be necessary
-                if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
+            if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
 
-                    // Every time the window is focused, check the time and reset the alarms.
-                    // This prevents any delay in the alarms after OS sleep/hibernation.
-                    browser.windows.onFocusChanged.addListener((windowId) => {
-                        if (windowId !== browser.windows.WINDOW_ID_NONE) {
-                            checkTime();
-                            browser.alarms.clearAll();
-                            createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
-                            createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
-                        }
-                    });
+                // Every time the window is focused, check the time and reset the alarms.
+                // This prevents any delay in the alarms after OS sleep/hibernation.
+                browser.windows.onFocusChanged.addListener((windowId) => {
+                    if (windowId !== browser.windows.WINDOW_ID_NONE) {
+                        checkTime();
+                        browser.alarms.clearAll();
+                        createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
+                        createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
+                    }
+                });
 
+                // If we are set to get suntimes automatically,
+                // then calculate the suntimes again.
+                if (obj[AUTOMATIC_SUNTIMES_KEY].check) {
+                    return calculateSuntimes()
+                        .then((result) => {
+                            return Promise.all([
+                                browser.storage.local.set({[SUNRISE_TIME_KEY]: {time: convertDateToString(result.nextSunrise)}}),
+                                browser.storage.local.set({[SUNSET_TIME_KEY]: {time: convertDateToString(result.nextSunset)}})
+                            ]);
+                        })
+                        .then(() => {
+                            return Promise.all([
+                                createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
+                                createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
+                            ]);
+                        });
+                }
+                else {
                     return Promise.all([
-                            createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
-                            createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
-                        ]);
+                        createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
+                        createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
+                    ]);
                 }
             }
         }, onError);
@@ -109,37 +126,55 @@ function createAlarm(timeKey, alarmName, periodInMinutes = null) {
 // - Check the time and change the theme accordingly.
 function alarmListener(alarmInfo) {
     if (alarmInfo.name === NEXT_SUNRISE_ALARM_NAME) {
-        return browser.storage.local.get(DAYTIME_THEME_KEY)
-            .then(enableTheme, onError);
-        /*
-        return browser.storage.local.get([
-                    AUTOMATIC_SUNTIMES_KEY,
-                    DAYTIME_THEME_KEY
-                ])
-
-            .then((obj) => {
-                
-                if (obj[AUTOMATIC_SUNTIMES_KEY].check) {
-
-                    calculateSuntimes()
-                        .then((suntimes) => {
-                            const when = suntimes.nextSunrise - Date.now();
-                            console.log(when);
-                            browser.alarms.create(NEXT_SUNRISE_ALARM_NAME, {
-                                when
+        return browser.storage.local.get([AUTOMATIC_SUNTIMES_KEY, DAYTIME_THEME_KEY])
+            .then(
+                (values) => {
+                    // If we are set to get suntimes automatically,
+                    // then calculate the sunset again upon
+                    // an alarm and create new alarms based on that.
+                    if (!values[AUTOMATIC_SUNTIMES_KEY].check) {
+                        calculateSuntimes()
+                            .then((result) => {
+                                return Promise.all([
+                                    browser.storage.local.set({[SUNRISE_TIME_KEY]: {time: convertDateToString(result.nextSunrise)}}),
+                                    browser.storage.local.set({[SUNSET_TIME_KEY]: {time: convertDateToString(result.nextSunset)}})
+                                ]);
+                            })
+                            .then(() => {
+                                return Promise.all([
+                                    createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
+                                    createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
+                                ]);
                             });
-                            logAllAlarms();
-                        });
+
+                        
+                    }
+                    enableTheme(values, DAYTIME_THEME_KEY);
                 }
-                console.log("done1");
-                enableTheme(obj[DAYTIME_THEME_KEY]);
-            }
-            , onError);
-                */
+                , onError);
     }
     else if (alarmInfo.name === NEXT_SUNSET_ALARM_NAME) {
-        return browser.storage.local.get(NIGHTTIME_THEME_KEY)
-            .then(enableTheme, onError);
+        return browser.storage.local.get([AUTOMATIC_SUNTIMES_KEY, NIGHTTIME_THEME_KEY])
+            .then(
+                (values) => {
+                    if (!values[AUTOMATIC_SUNTIMES_KEY].check) {
+                        calculateSuntimes()
+                            .then((result) => {
+                                return Promise.all([
+                                    browser.storage.local.set({[SUNRISE_TIME_KEY]: {time: convertDateToString(result.nextSunrise)}}),
+                                    browser.storage.local.set({[SUNSET_TIME_KEY]: {time: convertDateToString(result.nextSunset)}})
+                                ]);
+                            })
+                            .then(() => {
+                                return Promise.all([
+                                    createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
+                                    createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
+                                ]);
+                            });
+                    }
+                    enableTheme(values, NIGHTTIME_THEME_KEY);
+                }
+                , onError);
     }
     else if (alarmInfo.name === "checkTime") {
         return checkTime();
@@ -150,7 +185,7 @@ function alarmListener(alarmInfo) {
 // Will set the daytime theme between sunrise and sunset.
 // Otherwise, set nighttime theme.
 
-// Can split this function to be more generic. Make function enableTime happen as a parameter.
+// TODO: Can split this function to be more generic. Make function enableTime happen as a parameter.
 function checkTime() {
     let date = new Date(Date.now());
     let hours = date.getHours();
@@ -167,18 +202,22 @@ function checkTime() {
                     sunriseSplit[0], sunriseSplit[1], 
                     sunsetSplit[0], sunsetSplit[1])) {
                 browser.storage.local.get(DAYTIME_THEME_KEY)
-                    .then(enableTheme, onError);
+                    .then((obj) => {
+                        enableTheme(obj, DAYTIME_THEME_KEY);
+                    }, onError);
             } else {
                 browser.storage.local.get(NIGHTTIME_THEME_KEY)
-                    .then(enableTheme, onError);
+                    .then((obj) => {
+                        enableTheme(obj, NIGHTTIME_THEME_KEY);
+                    }, onError);
             }
         }, onError);
 }
 
 // Parse the object given and enable the theme.if it is not
 // already enabled.
-function enableTheme(theme) {
-    theme = theme[Object.keys(theme)[0]];
+function enableTheme(theme, themeKey) {
+    theme = theme[themeKey];
     return browser.management.get(theme.themeId)
         .then((extInfo) => {
             if (!extInfo.enabled) {

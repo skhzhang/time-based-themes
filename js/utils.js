@@ -75,3 +75,11 @@ function isEmpty(obj) {
     }
     return true;
 }
+
+// Helper:
+// Convert the time from a Date object to a string in the format of HH:MM.
+function convertDateToString(date) {
+    let hours = date.getHours();
+    let minutes = date.getMinutes();
+    return addLeadZero(hours) + ":" + addLeadZero(minutes);
+}

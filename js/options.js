@@ -103,31 +103,25 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
     if (automaticSuntimesRadio.checked) {
 
         // Prompt for and set the user's geolocation in storage.
-        setGeolocation()
-            .then(
-                // Calculate sunrise/sunset times based on location.
-                calculateSuntimes, 
-                onError)
-            .then((suntimes) => {
-                // Make changes to settings based on calculation results.
-                let sunriseHours = suntimes.nextSunrise.getHours();
-                let sunriseMinutes = suntimes.nextSunrise.getMinutes();
-                let sunsetHours = suntimes.nextSunset.getHours();
-                let sunsetMinutes = suntimes.nextSunset.getMinutes();
+        return setGeolocation()
+            .then((position) => {
+                    // Calculate sunrise/sunset times based on location.
+                    calculateSuntimes(position).then((suntimes) => {
+                        // Make changes to settings based on calculation results.
+                        browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: true}});
+                        sunriseInput.disabled = true;
+                        sunsetInput.disabled = true;
 
-                browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: true}});
-                sunriseInput.disabled = true;
-                sunsetInput.disabled = true;
-
-                sunriseInput.value = addLeadZero(sunriseHours) + ":" + addLeadZero(sunriseMinutes);
-                sunsetInput.value = addLeadZero(sunsetHours) + ":" + addLeadZero(sunsetMinutes);
-                sunriseInput.dispatchEvent(sunriseInputEvent);
-                sunsetInput.dispatchEvent(sunsetInputEvent);
-            }, (error) => {
-                onError(error);
-                automaticSuntimesRadio.checked = false;
-                manualSuntimesRadio.checked = true;
-        });
+                        sunriseInput.value = convertDateToString(suntimes.nextSunrise);
+                        sunsetInput.value = convertDateToString(suntimes.nextSunset);
+                        sunriseInput.dispatchEvent(sunriseInputEvent);
+                        sunsetInput.dispatchEvent(sunsetInputEvent);
+                    });
+                }, (error) => {
+                    onError(error);
+                    automaticSuntimesRadio.checked = false;
+                    manualSuntimesRadio.checked = true;
+                });
     }
 });
 
