@@ -6,21 +6,22 @@ Set Firefox to change the UI to a dark theme during the night and change back to
 **Try the extension at https://addons.mozilla.org/en-US/firefox/addon/automatic-dark/**
 
 ## Features
-- Set the sunrise and sunset times
+- Automatically calculate and set sunrise/sunset times based on your geolocation
+- ...or manually set the sunrise and sunset times, if you would prefer that!
 - Choose the daytime theme and nighttime theme to switch between
 
 ## Notes
-- Per [#5][issue5], if you have the `privacy.resistFingerprinting` flag in about:config set to `True`, the extension will not be able to detect your timezone. You would need to make an adjustment in your settings to compensate for this.
+- If you have the `privacy.resistFingerprinting` flag in about:config set to `True`, the extension will not be able to detect your timezone ([#5][issue5]). You would need to make an adjustment in your settings to compensate for this.
 
 ## Screenshots
-![Options page in version 1.0.2](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/time-based-theme-changer-options-1.0.2.png)
+![Options page in version 1.1.0](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/automaticdark-options-1.1.0-1.png)
+![Dark-themed options page in version 1.1.0](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/automaticdark-options-1.1.0-2.png)
 - Screenshot of the Options page in version 1.0.2.
 
 ## Feedback / Contributions
 Feedback and pull requests welcome! 
 
-What do you think? Is there something the extension can be doing better or can be doing that it is currently not?
-
+What do you think? Let me know!
 - [Add a new issue](https://github.com/skhzhang/time-based-themes/issues/new)
 - [Email](mailto:simonkhzhang@gmail.com)
 
