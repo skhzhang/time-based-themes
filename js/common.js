@@ -280,8 +280,10 @@ function setGeolocation() {
                     setStorage({
                         [GEOLOCATION_LATITUDE_KEY]: {latitude: position.coords.latitude},
                         [GEOLOCATION_LONGITUDE_KEY]: {longitude: position.coords.longitude}
+                    })
+                    .then(() => {
+                        resolve(); 
                     });
-                    resolve();
                 }, () => {
                 reject("Unable to fetch current location.");
             });

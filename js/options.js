@@ -104,9 +104,9 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
 
         // Prompt for and set the user's geolocation in storage.
         return setGeolocation()
-            .then((position) => {
+            .then(() => {
                     // Calculate sunrise/sunset times based on location.
-                    calculateSuntimes(position).then((suntimes) => {
+                    calculateSuntimes().then((suntimes) => {
                         // Make changes to settings based on calculation results.
                         browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: true}});
                         sunriseInput.disabled = true;
