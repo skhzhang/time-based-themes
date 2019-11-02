@@ -12,11 +12,12 @@ Set Firefox to change the UI to a dark theme during the night and change back to
 
 ## Notes
 - If you have the `privacy.resistFingerprinting` flag in about:config set to `True`, the extension will not be able to detect your timezone ([#5][issue5]). You would need to make an adjustment in your settings to compensate for this.
+- On Android, you may need to install 2 separate custom themes as Firefox for Android does not have any themes out of the box.
 
 ## Screenshots
 ![Options page in version 1.1.0](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/automaticdark-options-1.1.0-1.png)
 ![Dark-themed options page in version 1.1.0](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/automaticdark-options-1.1.0-2.png)
-- Screenshot of the Options page in version 1.0.2.
+- Screenshot of the Options page in version 1.1.0.
 
 ## Feedback / Contributions
 Feedback and pull requests welcome! 
