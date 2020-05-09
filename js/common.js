@@ -2,7 +2,7 @@
 
 const KEY_PREFIX = 'autodark';
 
-const AUTOMATIC_SUNTIMES_KEY = KEY_PREFIX + "automaticSuntimes";
+const CHANGE_MODE_KEY = KEY_PREFIX + "changeMode";
 const CHECK_TIME_STARTUP_ONLY_KEY = KEY_PREFIX + "checkTimeStartupOnly";
 const DAYTIME_THEME_KEY = KEY_PREFIX + "daytimeTheme";
 const NIGHTTIME_THEME_KEY = KEY_PREFIX + "nighttimeTheme";
@@ -14,7 +14,7 @@ const NEXT_SUNSET_ALARM_NAME = KEY_PREFIX + "nextSunset";
 const GEOLOCATION_LATITUDE_KEY = KEY_PREFIX + "geoLatitude";
 const GEOLOCATION_LONGITUDE_KEY = KEY_PREFIX + "geoLongitude";
 
-const DEFAULT_AUTOMATIC_SUNTIMES = false;
+const DEFAULT_CHANGE_MODE = "manual-suntimes";
 const DEFAULT_CHECK_TIME_STARTUP_ONLY = false;
 const DEFAULT_SUNRISE_TIME = "08:00";
 const DEFAULT_SUNSET_TIME = "20:00";
@@ -27,17 +27,18 @@ let DEFAULT_NIGHTTIME_THEME = "";
 // Things to do when the extension is starting up
 // (or if the settings have been reset).
 function init() {
-    // console.log("automaticDark DEBUG: Starting up automaticDark");
+    //console.log("automaticDark DEBUG: Starting up automaticDark");
+    browser.runtime.onInstalled.addListener(extensionUpdated);
 
     // Set values if they each have never been set before,
     // such as on first-time startup.
     return setStorage({
-            [AUTOMATIC_SUNTIMES_KEY]: {check: DEFAULT_AUTOMATIC_SUNTIMES},
+            [CHANGE_MODE_KEY]: {mode: DEFAULT_CHANGE_MODE}, // should change so that it populates with "location-suntimes"
             [CHECK_TIME_STARTUP_ONLY_KEY]: {check: DEFAULT_CHECK_TIME_STARTUP_ONLY},
             [SUNRISE_TIME_KEY]: {time: DEFAULT_SUNRISE_TIME},
             [SUNSET_TIME_KEY]: {time: DEFAULT_SUNSET_TIME}
         })
-        .then(() => {
+        .then((obj) => {
             // Check the user's themes and check the default daytime and
             // nighttime themes based on this.
             return setDefaultThemes();
@@ -49,31 +50,59 @@ function init() {
             });
         }, onError)
         .then(() => {
-            // On start up, check the time to see what theme to show.
-            checkTime();
-
             // If flag is not set to check only on startup,
             // create alarms to change the theme in the future.
             browser.alarms.onAlarm.addListener(alarmListener);
-            return browser.storage.local.get([CHECK_TIME_STARTUP_ONLY_KEY, AUTOMATIC_SUNTIMES_KEY]);
+            return browser.storage.local.get([CHECK_TIME_STARTUP_ONLY_KEY, CHANGE_MODE_KEY]);
         }, onError)
         .then((obj) => {
             if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
 
-                // Every time the window is focused, check the time and reset the alarms.
+                // On start up, change the themes appropriately.
+                changeThemes(obj[CHANGE_MODE_KEY].mode);
+
+                // Add a listener to change the theme when the window is focused.
+
+                // For changing based on system theme, this is a hack/additional check as
+                // matchMedia().addListener does not seem to be working.
+
+                // Also for changing based on suntimes,
+                // every time the window is focused, check the time and reset the alarms.
                 // This prevents any delay in the alarms after OS sleep/hibernation.
                 browser.windows.onFocusChanged.addListener((windowId) => {
                     if (windowId !== browser.windows.WINDOW_ID_NONE) {
-                        checkTime();
-                        browser.alarms.clearAll();
-                        createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
-                        createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
+                        changeThemes(obj[CHANGE_MODE_KEY].mode);
+
+                        if (obj[CHANGE_MODE_KEY].mode === "location-suntimes" || obj[CHANGE_MODE_KEY].mode === "manual-suntimes"){
+                            browser.alarms.clearAll();
+                            createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
+                            createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
+                        }
                     }
                 });
 
-                // If we are set to get suntimes automatically,
-                // then calculate the suntimes again.
-                if (obj[AUTOMATIC_SUNTIMES_KEY].check) {
+                if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
+                    // Add a listener to change the theme as soon as the
+                    // system theme is changed.
+                    // This should work but is not in testing.
+                    window.matchMedia('(prefers-color-scheme: dark)').addListener((e) => {
+                        if (e.matches) {
+                            browser.storage.local.get(NIGHTTIME_THEME_KEY)
+                                .then((obj) => {
+                                    enableTheme(obj, NIGHTTIME_THEME_KEY);
+                                }, onError);
+                        }
+                        else {
+                            browser.storage.local.get(DAYTIME_THEME_KEY)
+                                .then((obj) => {
+                                    enableTheme(obj, DAYTIME_THEME_KEY);
+                                }, onError);
+                        }
+                    }, onError);
+                }
+                else if (obj[CHANGE_MODE_KEY].mode === "location-suntimes") {
+                    // If we are set to get suntimes automatically,
+                    // then calculate the suntimes again.
                     return calculateSuntimes()
                         .then((result) => {
                             return Promise.all([
@@ -98,9 +127,19 @@ function init() {
         }, onError);
 }
 
+// Changes the current theme.
+// Takes a parameter indicating how to decide what theme to change to.
+function changeThemes(mode) {
+    if (mode === "system-theme") {
+        checkSysTheme();
+    }
+    else if (mode === "location-suntimes" || mode === "manual-suntimes"){
+        checkTime();
+    }
+}
+
 // Creates an alarm based on a key used to get 
-// a String in the 24h format 
-// "HH:MM" and an alarm name.
+// a String in the 24h format "HH:MM" and an alarm name.
 function createAlarm(timeKey, alarmName, periodInMinutes = null) {
     return browser.storage.local.get([
             CHECK_TIME_STARTUP_ONLY_KEY,
@@ -121,18 +160,17 @@ function createAlarm(timeKey, alarmName, periodInMinutes = null) {
 }
 
 // Depending on the alarm name passed, this listener will:
-// - Get the stored daytime/nighttime theme and 
-//   try to enable theme.
+// - Get the stored daytime/nighttime theme and try to enable theme.
 // - Check the time and change the theme accordingly.
 function alarmListener(alarmInfo) {
     if (alarmInfo.name === NEXT_SUNRISE_ALARM_NAME) {
-        return browser.storage.local.get([AUTOMATIC_SUNTIMES_KEY, DAYTIME_THEME_KEY])
+        return browser.storage.local.get([CHANGE_MODE, DAYTIME_THEME_KEY])
             .then(
                 (values) => {
                     // If we are set to get suntimes automatically,
                     // then calculate the sunset again upon
                     // an alarm and create new alarms based on that.
-                    if (!values[AUTOMATIC_SUNTIMES_KEY].check) {
+                    if (obj[CHANGE_MODE_KEY] = "location-suntimes") {
                         calculateSuntimes()
                             .then((result) => {
                                 return Promise.all([
@@ -157,7 +195,7 @@ function alarmListener(alarmInfo) {
         return browser.storage.local.get([AUTOMATIC_SUNTIMES_KEY, NIGHTTIME_THEME_KEY])
             .then(
                 (values) => {
-                    if (!values[AUTOMATIC_SUNTIMES_KEY].check) {
+                    if (obj[CHANGE_MODE_KEY] = "location-suntimes") {
                         calculateSuntimes()
                             .then((result) => {
                                 return Promise.all([
@@ -212,6 +250,21 @@ function checkTime() {
                     }, onError);
             }
         }, onError);
+}
+
+// Check the system theme and set the theme accordingly.
+function checkSysTheme() {
+    if(window.matchMedia('(prefers-color-scheme: dark)').matches){
+        browser.storage.local.get(NIGHTTIME_THEME_KEY)
+            .then((obj) => {
+                return enableTheme(obj, NIGHTTIME_THEME_KEY);
+            }, onError);
+    } else {
+        browser.storage.local.get(DAYTIME_THEME_KEY)
+            .then((obj) => {
+                return enableTheme(obj, DAYTIME_THEME_KEY);
+            }, onError);
+    }
 }
 
 // Parse the object given and enable the theme.if it is not
@@ -332,4 +385,9 @@ function calculateSuntimes() {
 
             return {nextSunrise: nextSunrise, nextSunset: nextSunset};
         }, onError);
+}
+
+
+function extensionUpdated() {
+
 }

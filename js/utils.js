@@ -41,14 +41,25 @@ function addLeadZero (num){
 // Set storage only if overrideDefault is true or
 // the managed storage is empty.
 function setStorage(obj, overrideDefault = false) {
-    //console.log(obj);
+    for (let item in obj) {
+        browser.storage.local.get(item)
+            .then((fetchedItem) => {
+                if (overrideDefault || isEmpty(fetchedItem)) {
+                    return browser.storage.local.set(obj)
+                        .then((obj) => {}, onError);
+                    }
+            }, onError);
+    }
+
     return browser.storage.local.get(Object.keys(obj))
         .then((items) => {
             // Only set storage if a value is not already set,
             // or if it is already empty.
             if (overrideDefault || isEmpty(items)) {
                 return browser.storage.local.set(obj)
-                    .then(() => {}, onError);
+                    .then((obj) => {
+                        console.log(obj);
+                    }, onError);
             }
         }, onError);
 }

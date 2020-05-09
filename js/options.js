@@ -4,6 +4,7 @@ let resetMessage = document.getElementById("reset-message");
 
 let automaticSuntimesRadio = document.getElementById("automatic-suntimes-radio");
 let manualSuntimesRadio = document.getElementById("manual-suntimes-radio");
+let sysThemeRadio = document.getElementById("system-theme-radio");
 
 let checkStartupBox = document.getElementById("check-startup-only");
 let sunriseInput = document.getElementById("sunrise-time");
@@ -84,13 +85,34 @@ browser.management.getAll().then((extensions) => {
         }, onError);
 });
 
-browser.storage.local.get(AUTOMATIC_SUNTIMES_KEY)
-    .then((obj) => {
-        automaticSuntimesRadio.checked = obj[AUTOMATIC_SUNTIMES_KEY].check;
-        manualSuntimesRadio.checked = !obj[AUTOMATIC_SUNTIMES_KEY].check;
-        sunriseInput.disabled = obj[AUTOMATIC_SUNTIMES_KEY].check;
-        sunsetInput.disabled = obj[AUTOMATIC_SUNTIMES_KEY].check;
-    }, onError);
+getChangeMode();
+
+function getChangeMode() {
+    browser.storage.local.get(CHANGE_MODE_KEY)
+        .then((obj) => {
+            if (obj[CHANGE_MODE_KEY].mode === "location-suntimes") {
+                automaticSuntimesRadio.checked = true;
+                manualSuntimesRadio.checked = false;
+                sysThemeRadio.checked = false;
+                sunriseInput.disabled = true;
+                sunsetInput.disabled = true;
+            }
+            else if (obj[CHANGE_MODE_KEY].mode === "manual-suntimes") {
+                automaticSuntimesRadio.checked = false;
+                manualSuntimesRadio.checked = true;
+                sysThemeRadio.checked = false;
+                sunriseInput.disabled = false;
+                sunsetInput.disabled = false;
+            }
+            else if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
+                automaticSuntimesRadio.checked = false;
+                manualSuntimesRadio.checked = false;
+                sysThemeRadio.checked = true;
+                sunriseInput.disabled = true;
+                sunsetInput.disabled = true;
+            }
+        }, onError);
+}
 
 browser.storage.local.get(CHECK_TIME_STARTUP_ONLY_KEY)
     .then((obj) => {
@@ -112,7 +134,7 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
                     // Calculate sunrise/sunset times based on location.
                     calculateSuntimes().then((suntimes) => {
                         // Make changes to settings based on calculation results.
-                        browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: true}});
+                        browser.storage.local.set({[CHANGE_MODE_KEY]: {mode: "location-suntimes"}});
                         sunriseInput.disabled = true;
                         sunsetInput.disabled = true;
 
@@ -124,18 +146,24 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
                 }, (error) => {
                     onError(error);
                     locationWarning.style.display = "inline";
-
-                    automaticSuntimesRadio.checked = false;
-                    manualSuntimesRadio.checked = true;
+                    getChangeMode(); // In error, change radio buttons (and settings) back to the way they were, based on storage.
                 });
     }
 });
 
 manualSuntimesRadio.addEventListener("input", function(event) {
     if (manualSuntimesRadio.checked) {
-        browser.storage.local.set({[AUTOMATIC_SUNTIMES_KEY]: {check: false}});
+        browser.storage.local.set({[CHANGE_MODE_KEY]: {mode: "manual-suntimes"}});
         sunriseInput.disabled = false;
         sunsetInput.disabled = false;
+    }
+});
+
+sysThemeRadio.addEventListener("input", function(event) {
+    if (sysThemeRadio.checked) {
+        browser.storage.local.set({[CHANGE_MODE_KEY]: {mode: "system-theme"}});
+        sunriseInput.disabled = true;
+        sunsetInput.disabled = true;
     }
 });
 
@@ -223,10 +251,11 @@ resetDefaultBtn.addEventListener("click",
                     browser.alarms.clearAll()
                 ])
                 .then(() => {
-                    automaticSuntimesRadio.checked = DEFAULT_AUTOMATIC_SUNTIMES;
-                    manualSuntimesRadio.checked = !DEFAULT_AUTOMATIC_SUNTIMES;
-                    sunriseInput.disabled = DEFAULT_AUTOMATIC_SUNTIMES;
-                    sunsetInput.disabled = DEFAULT_AUTOMATIC_SUNTIMES;
+                    automaticSuntimesRadio.checked = false;
+                    manualSuntimesRadio.checked = true;
+                    sysThemeRadio.checked = false;
+                    sunriseInput.disabled = false;
+                    sunsetInput.disabled = false;
 
                     checkStartupBox.checked = DEFAULT_CHECK_TIME_STARTUP_ONLY;
                     sunriseInput.value = DEFAULT_SUNRISE_TIME;
