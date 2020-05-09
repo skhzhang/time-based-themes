@@ -1,3 +1,5 @@
+let locationWarning = document.getElementById("location-permission-warning");
+
 let automaticSuntimesRadio = document.getElementById("automatic-suntimes-radio");
 let manualSuntimesRadio = document.getElementById("manual-suntimes-radio");
 
@@ -119,6 +121,8 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
                     });
                 }, (error) => {
                     onError(error);
+                    locationWarning.style.display = "inline";
+
                     automaticSuntimesRadio.checked = false;
                     manualSuntimesRadio.checked = true;
                 });
