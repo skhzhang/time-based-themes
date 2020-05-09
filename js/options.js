@@ -1,4 +1,6 @@
 let locationWarning = document.getElementById("location-permission-warning");
+let startupOnlyMessage = document.getElementById("startup-only-message");
+let resetMessage = document.getElementById("reset-message");
 
 let automaticSuntimesRadio = document.getElementById("automatic-suntimes-radio");
 let manualSuntimesRadio = document.getElementById("manual-suntimes-radio");
@@ -148,11 +150,13 @@ checkStartupBox.addEventListener("input", function(event) {
             .then(() => {
                 logAllAlarms();
             }, onError);
+        startupOnlyMessage.style.display = "inline";
     }
     else {
         browser.storage.local.set({[CHECK_TIME_STARTUP_ONLY_KEY]: {check: false}});
         createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24);
         createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24);
+        startupOnlyMessage.style.display = "none";
 }
 });
 
@@ -234,6 +238,8 @@ resetDefaultBtn.addEventListener("click",
                 .then(() => {
                     daytimeThemeList.value = DEFAULT_DAYTIME_THEME;
                     nighttimeThemeList.value = DEFAULT_NIGHTTIME_THEME;
+                    resetMessage.style.display = "inline";
+
                     return init();
                 });
         }

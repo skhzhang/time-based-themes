@@ -17,7 +17,7 @@
         <p>
             <input type="radio" id="automatic-suntimes-radio" name="set-suntimes" value="automatic-suntimes">
             <label for="automatic-suntimes-radio">Automatically set sunrise/sunset times (requires location)</label>
-            <label id="location-permission-warning" style="color: red; display: none;"> - Location permission needs to be granted to enable.</label>
+            <label id="location-permission-warning" style="color: red; display: none;"> - Location permission needs to be granted</label>
         </p>
         <p>
             <input type="radio" id="manual-suntimes-radio" name="set-suntimes" value="manual-suntimes">
@@ -34,6 +34,7 @@
         <p>
             <input type="checkbox" id="check-startup-only" />
             <label for="check-startup-only">Do not change themes automatically (change only on start-up and setup)</label>
+            <label id="startup-only-message" style="display: none;"> - Restart for changes to take effect</label>
         </p>
         <p>
             <label for="daytime-theme-list">Daytime theme: </label>
@@ -49,6 +50,7 @@
         </p>
         <p>
             <button id="reset-default-btn">Reset Settings to Default</button>
+            <label id="reset-message" style="display: none;"> - Restart for changes to take effect</label>
         </p>
     </section>
     <div class="divider"></div>
