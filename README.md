@@ -6,12 +6,14 @@ Set Firefox to change the UI to a dark theme during the night and change back to
 **Try the extension at https://addons.mozilla.org/en-US/firefox/addon/automatic-dark/**
 
 ## Features
-- Automatically calculate and set sunrise/sunset times based on your geolocation
-- ...or manually set the sunrise and sunset times, if you would prefer that!
+- Automatically calculate and set sunrise/sunset times based on your location
+- - ...or manually set the sunrise and sunset times
+- - ...or only change the theme based on the system theme!
 - Choose the daytime theme and nighttime theme to switch between
 
 ## Notes
 - If you have the `privacy.resistFingerprinting` flag in about:config set to `True`, the extension will not be able to detect your timezone ([#5][issue5]). You would need to make an adjustment in your settings to compensate for this.
+- Note that Firefox's Default theme will match the default system themes out of the box as of 63.0 (for Windows 10, this is as of [63.0](https://www.mozilla.org/en-US/firefox/63.0/releasenotes/)).
 - On Android, you may need to install 2 separate custom themes as Firefox for Android does not have any themes out of the box.
 
 ## Screenshots
@@ -20,9 +22,7 @@ Set Firefox to change the UI to a dark theme during the night and change back to
 - Screenshot of the Options page in version 1.1.0.
 
 ## Feedback / Contributions
-Feedback and pull requests welcome! 
-
-What do you think? Let me know!
+Feedback and pull requests welcome! What do you think? Let me know!
 - [Add a new issue](https://github.com/skhzhang/time-based-themes/issues/new)
 - [Email](mailto:simonkhzhang@gmail.com)
 
