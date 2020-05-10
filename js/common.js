@@ -71,13 +71,16 @@ function init() {
                 // This prevents any delay in the alarms after OS sleep/hibernation.
                 browser.windows.onFocusChanged.addListener((windowId) => {
                     if (windowId !== browser.windows.WINDOW_ID_NONE) {
-                        changeThemes(obj[CHANGE_MODE_KEY].mode);
+                        browser.storage.local.get(CHANGE_MODE_KEY)
+                            .then((obj) => {
+                                changeThemes(obj[CHANGE_MODE_KEY].mode);
 
-                        if (obj[CHANGE_MODE_KEY].mode === "location-suntimes" || obj[CHANGE_MODE_KEY].mode === "manual-suntimes"){
-                            browser.alarms.clearAll();
-                            createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
-                            createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
-                        }
+                                if (obj[CHANGE_MODE_KEY].mode === "location-suntimes" || obj[CHANGE_MODE_KEY].mode === "manual-suntimes"){
+                                    browser.alarms.clearAll();
+                                    createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
+                                    createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
+                                }
+                            });
                     }
                 });
 
