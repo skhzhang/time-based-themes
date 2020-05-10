@@ -88,7 +88,7 @@ browser.management.getAll().then((extensions) => {
 getChangeMode();
 
 function getChangeMode() {
-    browser.storage.local.get(CHANGE_MODE_KEY)
+    return browser.storage.local.get(CHANGE_MODE_KEY)
         .then((obj) => {
             if (obj[CHANGE_MODE_KEY].mode === "location-suntimes") {
                 automaticSuntimesRadio.checked = true;
@@ -147,6 +147,7 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
                     onError(error);
                     locationWarning.style.display = "inline";
                     getChangeMode(); // In error, change radio buttons (and settings) back to the way they were, based on storage.
+                    changeThemes("location-theme");
                 });
     }
 });
@@ -156,6 +157,7 @@ manualSuntimesRadio.addEventListener("input", function(event) {
         browser.storage.local.set({[CHANGE_MODE_KEY]: {mode: "manual-suntimes"}});
         sunriseInput.disabled = false;
         sunsetInput.disabled = false;
+        changeThemes("manual-suntimes");
     }
 });
 
@@ -164,6 +166,7 @@ sysThemeRadio.addEventListener("input", function(event) {
         browser.storage.local.set({[CHANGE_MODE_KEY]: {mode: "system-theme"}});
         sunriseInput.disabled = true;
         sunsetInput.disabled = true;
+        changeThemes("system-theme");
     }
 });
 
