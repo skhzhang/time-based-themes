@@ -12,6 +12,7 @@
   "description": "Automatically change Firefox's theme based on the time",
 
   "icons": {
+    "300": "img/automaticDark-op-tbg-300.png"
   },
 
   "permissions": [

@@ -2,7 +2,9 @@
 
 const KEY_PREFIX = 'autodark';
 
-const CHANGE_MODE_KEY = KEY_PREFIX + "changeMode";
+const CURRENT_MODE_KEY = KEY_PREFIX + "currentMode"; // day-mode, night-mode
+
+const CHANGE_MODE_KEY = KEY_PREFIX + "changeMode"; // location-suntimes, manual-suntimes, system-theme
 const CHECK_TIME_STARTUP_ONLY_KEY = KEY_PREFIX + "checkTimeStartupOnly";
 const DAYTIME_THEME_KEY = KEY_PREFIX + "daytimeTheme";
 const NIGHTTIME_THEME_KEY = KEY_PREFIX + "nighttimeTheme";
@@ -57,7 +59,6 @@ function init() {
         }, onError)
         .then((obj) => {
             if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
-
                 // On start up, change the themes appropriately.
                 changeThemes(obj[CHANGE_MODE_KEY].mode);
 
@@ -133,12 +134,16 @@ function init() {
 // Changes the current theme.
 // Takes a parameter indicating how to decide what theme to change to.
 function changeThemes(mode) {
-    if (mode === "system-theme") {
-        checkSysTheme();
-    }
-    else if (mode === "location-suntimes" || mode === "manual-suntimes"){
-        checkTime();
-    }
+    return browser.storage.local.get(CHANGE_MODE_KEY)
+        .then((obj) => {
+            let mode = obj[CHANGE_MODE_KEY].mode;
+            if (mode === "system-theme") {
+                return checkSysTheme();
+            }
+            else if (mode === "location-suntimes" || mode === "manual-suntimes"){
+                return checkTime();
+            }
+        });
 }
 
 // Creates an alarm based on a key used to get 
@@ -242,14 +247,20 @@ function checkTime() {
                     hours, minutes, 
                     sunriseSplit[0], sunriseSplit[1], 
                     sunsetSplit[0], sunsetSplit[1])) {
-                browser.storage.local.get(DAYTIME_THEME_KEY)
+                return browser.storage.local.get(DAYTIME_THEME_KEY)
                     .then((obj) => {
-                        enableTheme(obj, DAYTIME_THEME_KEY);
+                        return enableTheme(obj, DAYTIME_THEME_KEY)
+                            .then(() => {
+                                return browser.storage.local.set({[CURRENT_MODE_KEY]: {mode: "day-mode"}});
+                            });
                     }, onError);
             } else {
-                browser.storage.local.get(NIGHTTIME_THEME_KEY)
+                return browser.storage.local.get(NIGHTTIME_THEME_KEY)
                     .then((obj) => {
-                        enableTheme(obj, NIGHTTIME_THEME_KEY);
+                        return enableTheme(obj, NIGHTTIME_THEME_KEY)
+                            .then(() => {
+                                return browser.storage.local.set({[CURRENT_MODE_KEY]: {mode: "night-mode"}});
+                            });
                     }, onError);
             }
         }, onError);
@@ -258,14 +269,20 @@ function checkTime() {
 // Check the system theme and set the theme accordingly.
 function checkSysTheme() {
     if(window.matchMedia('(prefers-color-scheme: dark)').matches){
-        browser.storage.local.get(NIGHTTIME_THEME_KEY)
+        return browser.storage.local.get(NIGHTTIME_THEME_KEY)
             .then((obj) => {
-                return enableTheme(obj, NIGHTTIME_THEME_KEY);
+                return Promise.all([
+                    browser.storage.local.set({[CURRENT_MODE_KEY]: {mode: "night-mode"}}), 
+                    enableTheme(obj, NIGHTTIME_THEME_KEY)
+                ]);
             }, onError);
     } else {
-        browser.storage.local.get(DAYTIME_THEME_KEY)
+        return browser.storage.local.get(DAYTIME_THEME_KEY)
             .then((obj) => {
-                return enableTheme(obj, DAYTIME_THEME_KEY);
+                return Promise.all([
+                    browser.storage.local.set({[CURRENT_MODE_KEY]: {mode: "day-mode"}}),
+                    enableTheme(obj, DAYTIME_THEME_KEY)
+                ]);
             }, onError);
     }
 }

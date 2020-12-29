@@ -28,6 +28,32 @@ browser.storage.local.get(null)
 */
 // logAllAlarms();
 
+changeLogo();
+
+function changeLogo() {
+    browser.storage.local.get(CURRENT_MODE_KEY)
+        .then((currentMode) => {
+            currentMode = currentMode[CURRENT_MODE_KEY].mode;
+
+            console.log("Changing logo to: " + currentMode);
+
+            if (currentMode === "day-mode") {
+                document.querySelector(".logo.day-mode").style.display = "inline-block";
+                document.querySelector(".logo.night-mode").style.display = "none";
+                document.querySelector(".logo.off-mode").style.display = "none";
+            } else if (currentMode === "night-mode") {
+                document.querySelector(".logo.day-mode").style.display = "none";
+                document.querySelector(".logo.night-mode").style.display = "inline-block";
+                document.querySelector(".logo.off-mode").style.display = "none";
+            } else { // off-mode
+                document.querySelector(".logo.day-mode").style.display = "none";
+                document.querySelector(".logo.night-mode").style.display = "none";
+                document.querySelector(".logo.off-mode").style.display = "inline-block";
+            }
+        }, onError);
+}
+
+
 // Darken the page theme if the current theme is 
 // Firefox's default dark theme.
 browser.management.get("firefox-compact-dark@mozilla.org")
@@ -133,6 +159,8 @@ automaticSuntimesRadio.addEventListener("input", function(event) {
             .then(() => {
                     // Calculate sunrise/sunset times based on location.
                     calculateSuntimes().then((suntimes) => {
+                        changeLogo();
+
                         // Make changes to settings based on calculation results.
                         browser.storage.local.set({[CHANGE_MODE_KEY]: {mode: "location-suntimes"}});
                         sunriseInput.disabled = true;
@@ -157,7 +185,7 @@ manualSuntimesRadio.addEventListener("input", function(event) {
         browser.storage.local.set({[CHANGE_MODE_KEY]: {mode: "manual-suntimes"}});
         sunriseInput.disabled = false;
         sunsetInput.disabled = false;
-        changeThemes("manual-suntimes");
+        changeThemes("manual-suntimes").then(changeLogo);
     }
 });
 
@@ -166,7 +194,7 @@ sysThemeRadio.addEventListener("input", function(event) {
         browser.storage.local.set({[CHANGE_MODE_KEY]: {mode: "system-theme"}});
         sunriseInput.disabled = true;
         sunsetInput.disabled = true;
-        changeThemes("system-theme");
+        changeThemes("system-theme").then(changeLogo);
     }
 });
 
@@ -197,7 +225,7 @@ checkStartupBox.addEventListener("input", function(event) {
 sunriseInput.addEventListener("input", function(event) {
     browser.storage.local.set({[SUNRISE_TIME_KEY]: {time: sunriseInput.value}})
         .then(() => {
-            checkTime();
+            checkTime().then(changeLogo);
             return browser.storage.local.get(CHECK_TIME_STARTUP_ONLY_KEY)
         }, onError)
         .then((obj) => {
@@ -212,7 +240,7 @@ sunriseInput.addEventListener("input", function(event) {
 sunsetInput.addEventListener("input", function(event) {
     browser.storage.local.set({[SUNSET_TIME_KEY]: {time: sunsetInput.value}})
         .then(() => {
-            checkTime();
+            checkTime().then(changeLogo);
             return browser.storage.local.get(CHECK_TIME_STARTUP_ONLY_KEY);
         }, onError)
         .then((obj) => {
@@ -273,7 +301,8 @@ resetDefaultBtn.addEventListener("click",
                     resetMessage.style.display = "inline";
 
                     return init();
-                });
+                }, onError)
+                .then(changeLogo);
         }
     }
 );

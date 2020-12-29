@@ -8,7 +8,14 @@ body {
 }
 
 header {
+    color: rgba(249, 249, 250, 0.8);
+    background-color: #202020;
+
     padding: 0 5em;
+    height: 64px;
+}
+header>h1 {
+    display: inline-block;
 }
 
 section {
@@ -36,4 +43,8 @@ a:visited {
 a.no-style, .night a.no-style {
     color: inherit;
     text-decoration: inherit;
+}
+
+.logo {
+    vertical-align: middle;
 }
