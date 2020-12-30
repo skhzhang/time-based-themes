@@ -1,4 +1,7 @@
 # automaticDark - Time-Based Theme Changer
+
+![Options page in version 1.3.0](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/automaticdark-cover.png)
+
 This is a simple Firefox WebExtension that allows you to automatically switch between your themes based on the current time.
 
 Set Firefox to change the UI to a dark theme during the night and change back to a light theme during the day!
@@ -16,8 +19,8 @@ Set Firefox to change the UI to a dark theme during the night and change back to
 - Note that Firefox's Default theme may match the default system themes out of the box (for Windows 10, this is as of [63.0](https://www.mozilla.org/en-US/firefox/63.0/releasenotes/)).
 
 ## Screenshots
-![Options page in version 1.1.0](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/automaticdark-options-1.1.0-1.png)
-![Dark-themed options page in version 1.1.0](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/automaticdark-options-1.1.0-2.png)
+![Options page in version 1.3.0](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/automaticdark-options-1.3.0-1.png)
+![Dark-themed options page in version 1.3.0](https://raw.githubusercontent.com/skhzhang/time-based-themes/assets/automaticdark-options-1.3.0-2.png)
 - Screenshot of the Options page in version 1.1.0.
 
 ## Feedback / Contributions
