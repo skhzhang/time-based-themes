@@ -255,7 +255,10 @@ sunsetInput.addEventListener("input", function(event) {
 daytimeThemeList.addEventListener('change', function(event) {
     browser.storage.local.set({[DAYTIME_THEME_KEY]: {themeId: this.value}})
         .then(() => {
-            return checkTime();
+            return browser.storage.local.get([CHECK_TIME_STARTUP_ONLY_KEY, CHANGE_MODE_KEY]);
+        }, onError)
+        .then((obj) => {
+            changeThemeBasedOnChangeMode(obj[CHANGE_MODE_KEY].mode);
         }, onError);
     }
 );
@@ -265,7 +268,10 @@ daytimeThemeList.addEventListener('change', function(event) {
 nighttimeThemeList.addEventListener('change', function(event) {
     browser.storage.local.set({[NIGHTTIME_THEME_KEY]: {themeId: this.value}})
         .then(() => {
-            return checkTime();
+            return browser.storage.local.get([CHECK_TIME_STARTUP_ONLY_KEY, CHANGE_MODE_KEY]);
+        }, onError)
+        .then((obj) => {
+            changeThemeBasedOnChangeMode(obj[CHANGE_MODE_KEY].mode);
         }, onError);
     }
 );
