@@ -60,7 +60,7 @@ function init() {
         .then((obj) => {
             if (!obj[CHECK_TIME_STARTUP_ONLY_KEY].check) {
                 // On start up, change the themes appropriately.
-                changeThemes(obj[CHANGE_MODE_KEY].mode);
+                changeThemeBasedOnChangeMode(obj[CHANGE_MODE_KEY].mode);
 
                 // Add a listener to change the theme when the window is focused.
 
@@ -74,7 +74,7 @@ function init() {
                     if (windowId !== browser.windows.WINDOW_ID_NONE) {
                         browser.storage.local.get(CHANGE_MODE_KEY)
                             .then((obj) => {
-                                changeThemes(obj[CHANGE_MODE_KEY].mode);
+                                changeThemeBasedOnChangeMode(obj[CHANGE_MODE_KEY].mode);
 
                                 if (obj[CHANGE_MODE_KEY].mode === "location-suntimes" || obj[CHANGE_MODE_KEY].mode === "manual-suntimes"){
                                     browser.alarms.clearAll();
@@ -133,7 +133,7 @@ function init() {
 
 // Changes the current theme.
 // Takes a parameter indicating how to decide what theme to change to.
-function changeThemes(mode) {
+function changeThemeBasedOnChangeMode(mode) {
     return browser.storage.local.get(CHANGE_MODE_KEY)
         .then((obj) => {
             let mode = obj[CHANGE_MODE_KEY].mode;
