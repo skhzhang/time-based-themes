@@ -88,16 +88,30 @@ browser.management.getAll().then((extensions) => {
 
             daytimeThemeList.appendChild(extOption);
             nighttimeThemeList.appendChild(extOption.cloneNode(true));
+
+            // Take note of the currently enabled theme.
+            if (extension.enabled === true) {
+                currentlyEnabledTheme = extension;
+                console.log(currentlyEnabledTheme);
+            }
         }
     }
 
-    // Set the default value of the dropdowns.
+    
     browser.storage.local.get(DAYTIME_THEME_KEY)
         .then((theme) => {
             theme = theme[Object.keys(theme)[0]];
 
             if (!isEmpty(theme)) {
+                // Set the default value of the dropdown.
                 daytimeThemeList.value = theme.themeId;
+            }
+
+            if (currentlyEnabledTheme.id === theme.themeId) {
+                console.log("Day time theme is the currentlyEnabledTheme.");
+            }
+            else {
+                console.log("Day time theme is not the currentlyEnabledTheme.");
             }
         }, onError);
 
@@ -106,7 +120,15 @@ browser.management.getAll().then((extensions) => {
             theme = theme[Object.keys(theme)[0]];
 
             if (!isEmpty(theme)) {
+                // Set the default value of the dropdown.
                 nighttimeThemeList.value = theme.themeId;
+            }
+
+            if (currentlyEnabledTheme.id === theme.themeId) {
+                console.log("Night time theme is the currentlyEnabledTheme.");
+            }
+            else {
+                console.log("Night time theme is not the currentlyEnabledTheme.");
             }
         }, onError);
 });
