@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Report a problem with the extension
-title: "[BUG]"
+title: ''
 labels: bug
 assignees: ''
 
