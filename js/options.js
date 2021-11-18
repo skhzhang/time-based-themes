@@ -38,9 +38,6 @@ changeLogo();
 changeOptionsPageTheme();
 getChangeMode();
 
-
-}
-
 browser.storage.onChanged.addListener((changes, area) => {
     let changedItems = Object.keys(changes);
     for (let item of changedItems) {
