@@ -2,6 +2,8 @@
 
 const KEY_PREFIX = 'autodark';
 
+const DEBUG_MODE_KEY = KEY_PREFIX + "debugMode"; 
+
 const CURRENT_MODE_KEY = KEY_PREFIX + "currentMode"; // day-mode, night-mode
 
 const CHANGE_MODE_KEY = KEY_PREFIX + "changeMode"; // location-suntimes, manual-suntimes, system-theme
@@ -21,22 +23,36 @@ const DEFAULT_CHECK_TIME_STARTUP_ONLY = false;
 const DEFAULT_SUNRISE_TIME = "08:00";
 const DEFAULT_SUNSET_TIME = "20:00";
 
+const DEFAULT_DEBUG_MODE = false;
+
 // Default themes are set after looking through the user's
 // current theme and their installed themes.
 let DEFAULT_DAYTIME_THEME = "";
 let DEFAULT_NIGHTTIME_THEME = "";
 
+let DEBUG_MODE = false;
+browser.storage.local.get(DEBUG_MODE_KEY)
+    .then((obj) => {
+        DEBUG_MODE = obj[DEBUG_MODE_KEY].check;
+
+        if (DEBUG_MODE)
+            console.log("automaticDark DEBUG: DEBUG_MODE is enabled.");
+    }, onError);
+
 // Things to do when the extension is starting up
 // (or if the settings have been reset).
 function init() {
-    //console.log("automaticDark DEBUG: Starting up automaticDark");
-    browser.runtime.onInstalled.addListener(extensionUpdated);
+    if (DEBUG_MODE) {
+        console.log("automaticDark DEBUG: 0 - Start init");
+        console.log("automaticDark DEBUG: 0 - Starting up automaticDark");
+    }
 
     // Set values if they each have never been set before,
     // such as on first-time startup.
     return setStorage({
-            [CHANGE_MODE_KEY]: {mode: DEFAULT_CHANGE_MODE}, // should change so that it populates with "location-suntimes"
+            [CHANGE_MODE_KEY]: {mode: DEFAULT_CHANGE_MODE},
             [CHECK_TIME_STARTUP_ONLY_KEY]: {check: DEFAULT_CHECK_TIME_STARTUP_ONLY},
+            [DEBUG_MODE_KEY]: {check: DEFAULT_DEBUG_MODE},
             [SUNRISE_TIME_KEY]: {time: DEFAULT_SUNRISE_TIME},
             [SUNSET_TIME_KEY]: {time: DEFAULT_SUNSET_TIME}
         })
@@ -64,14 +80,17 @@ function init() {
 
                 // Add a listener to change the theme when the window is focused.
 
-                // For changing based on system theme, this is a hack/additional check as
-                // matchMedia().addListener does not seem to be working.
-
+                // For changing based on system theme, this is an additional check as
+                // matchMedia().addListener does not always work across OS configurations.
                 // Also for changing based on suntimes,
                 // every time the window is focused, check the time and reset the alarms.
                 // This prevents any delay in the alarms after OS sleep/hibernation.
                 browser.windows.onFocusChanged.addListener((windowId) => {
                     if (windowId !== browser.windows.WINDOW_ID_NONE) {
+
+                        if (DEBUG_MODE)
+                            console.log("automaticDark DEBUG: 10 - Window was focused. Attempt theme change.");
+
                         browser.storage.local.get(CHANGE_MODE_KEY)
                             .then((obj) => {
                                 changeThemeBasedOnChangeMode(obj[CHANGE_MODE_KEY].mode);
@@ -85,24 +104,26 @@ function init() {
                     }
                 });
 
+                // Add listener that will change the theme if the mode is set to "system-theme"
+                window.matchMedia('(prefers-color-scheme: dark)').addListener((e) => {
+
+                    if (DEBUG_MODE)
+                        console.log("automaticDark DEBUG: 10 - prefers-color-scheme changed.");
+
+                    browser.storage.local.get(CHANGE_MODE_KEY)
+                        .then((obj) => {
+                            if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
+                                checkSysTheme();
+                            }
+                        });
+                }, onError);
+
                 if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
-                    // Add a listener to change the theme as soon as the
-                    // system theme is changed.
-                    // This should work but is not in testing.
-                    window.matchMedia('(prefers-color-scheme: dark)').addListener((e) => {
-                        if (e.matches) {
-                            browser.storage.local.get(NIGHTTIME_THEME_KEY)
-                                .then((obj) => {
-                                    enableTheme(obj, NIGHTTIME_THEME_KEY);
-                                }, onError);
-                        }
-                        else {
-                            browser.storage.local.get(DAYTIME_THEME_KEY)
-                                .then((obj) => {
-                                    enableTheme(obj, DAYTIME_THEME_KEY);
-                                }, onError);
-                        }
-                    }, onError);
+                    // browser.browserSettings.overrideContentColorScheme changes the following
+                    // about:config to "2", effectively applying a light/dark theme based on the device theme
+                    // and allowing the prefers-color-scheme media query to be used to detect the device theme.
+                    // The about:config setting is: layout.css.prefers-color-scheme.content-override
+                    browser.browserSettings.overrideContentColorScheme.set({value: "system"});
                 }
                 else if (obj[CHANGE_MODE_KEY].mode === "location-suntimes") {
                     // If we are set to get suntimes automatically,
@@ -121,7 +142,7 @@ function init() {
                             ]);
                         });
                 }
-                else {
+                else { // manual-suntimes
                     return Promise.all([
                         createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
                         createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
@@ -134,9 +155,16 @@ function init() {
 // Changes the current theme.
 // Takes a parameter indicating how to decide what theme to change to.
 function changeThemeBasedOnChangeMode(mode) {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start changeThemeBasedOnChangeMode");
+
     return browser.storage.local.get(CHANGE_MODE_KEY)
         .then((obj) => {
             let mode = obj[CHANGE_MODE_KEY].mode;
+
+            if (DEBUG_MODE)
+                console.log("automaticDark DEBUG: 50 changeThemeBasedOnChangeMode - Mode is set to: " + mode);
+
             if (mode === "system-theme") {
                 return checkSysTheme();
             }
@@ -149,6 +177,9 @@ function changeThemeBasedOnChangeMode(mode) {
 // Creates an alarm based on a key used to get 
 // a String in the 24h format "HH:MM" and an alarm name.
 function createAlarm(timeKey, alarmName, periodInMinutes = null) {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start createAlarm");
+
     return browser.storage.local.get([
             CHECK_TIME_STARTUP_ONLY_KEY,
             timeKey
@@ -171,6 +202,9 @@ function createAlarm(timeKey, alarmName, periodInMinutes = null) {
 // - Get the stored daytime/nighttime theme and try to enable theme.
 // - Check the time and change the theme accordingly.
 function alarmListener(alarmInfo) {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start alarmListener");
+
     if (alarmInfo.name === NEXT_SUNRISE_ALARM_NAME) {
         return browser.storage.local.get([CHANGE_MODE, DAYTIME_THEME_KEY])
             .then(
@@ -236,7 +270,11 @@ function checkTime() {
     let date = new Date(Date.now());
     let hours = date.getHours();
     let minutes = date.getMinutes();
-    //console.log("It is currently: " + hours + ":" + minutes + ". Conducting time check now...");
+
+    if (DEBUG_MODE) {
+        console.log("automaticDark DEBUG: Start checkTime");
+        console.log("automaticDark DEBUG: It is currently: " + hours + ":" + minutes + ". Conducting time check now...");
+    }
 
     return browser.storage.local.get([SUNRISE_TIME_KEY, SUNSET_TIME_KEY])
         .then((obj) => {
@@ -268,7 +306,12 @@ function checkTime() {
 
 // Check the system theme and set the theme accordingly.
 function checkSysTheme() {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start checkSysTheme");
+
     if(window.matchMedia('(prefers-color-scheme: dark)').matches){
+        if (DEBUG_MODE)
+            console.log("automaticDark DEBUG: 90 checkSysTheme - User prefers dark interface");
         return browser.storage.local.get(NIGHTTIME_THEME_KEY)
             .then((obj) => {
                 return Promise.all([
@@ -277,6 +320,8 @@ function checkSysTheme() {
                 ]);
             }, onError);
     } else {
+        if (DEBUG_MODE)
+            console.log("automaticDark DEBUG: 90 checkSysTheme - User prefers light interface");
         return browser.storage.local.get(DAYTIME_THEME_KEY)
             .then((obj) => {
                 return Promise.all([
@@ -290,32 +335,22 @@ function checkSysTheme() {
 // Parse the object given and enable the theme.if it is not
 // already enabled.
 function enableTheme(theme, themeKey) {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start enableTheme");
+
     theme = theme[themeKey];
     return browser.management.get(theme.themeId)
         .then((extInfo) => {
             if (!extInfo.enabled) {
-                //console.log("automaticDark DEBUG: Enabled theme " + theme.themeId);
+                if (DEBUG_MODE)
+                    console.log("automaticDark DEBUG: 100 enableTheme - Enabled theme " + theme.themeId);
                 browser.management.setEnabled(theme.themeId, true);
             }
+            else {
+                if (DEBUG_MODE)
+                    console.log("automaticDark DEBUG: 100 enableTheme - " + theme.themeId + " is already enabled.");
+            }
         }, onError);
-}
-
-// Take in the time as hours and minutes and
-// return the next time it will occur as
-// milliseconds since the epoch.
-function convertToNextMilliEpoch(hours, minutes) {
-    let returnDate = new Date(Date.now());
-    returnDate.setHours(hours);
-    returnDate.setMinutes(minutes);
-    returnDate.setSeconds(0);
-    returnDate.setMilliseconds(0);
-
-    // If the specified time has already occurred, 
-    // the next time it will occur will be the next day.
-    if (returnDate < Date.now()) {
-        returnDate.setDate(returnDate.getDate() + 1);
-    }
-    return returnDate.getTime();
 }
 
 // Set the currently enabled theme
@@ -324,6 +359,9 @@ function convertToNextMilliEpoch(hours, minutes) {
 // Set default nighttime theme to Firefox's
 // default if it is available.
 function setDefaultThemes() {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start setDefaultThemes");
+
     // Iterate through each theme.
     return browser.management.getAll()
         .then((extensions) => {
@@ -345,6 +383,9 @@ function setDefaultThemes() {
 
 // Prompt user to give location. Then store it.
 function setGeolocation() {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start setGeolocation");
+
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
             reject('Geolocation is not supported by your browser.');
@@ -367,6 +408,9 @@ function setGeolocation() {
 // Calculate the next sunrise/sunset times
 // based on today's date,.tomorrow's date, and geolocation in storage.
 function calculateSuntimes() {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start calculateSuntimes");
+
     return browser.storage.local.get([GEOLOCATION_LATITUDE_KEY, GEOLOCATION_LONGITUDE_KEY])
         .then((position) => {
 
@@ -405,9 +449,4 @@ function calculateSuntimes() {
 
             return {nextSunrise: nextSunrise, nextSunset: nextSunset};
         }, onError);
-}
-
-
-function extensionUpdated() {
-
 }

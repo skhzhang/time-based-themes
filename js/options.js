@@ -15,8 +15,14 @@ let nighttimeThemeList = document.getElementById("nighttime-theme-list");
 let geolocationBtn = document.getElementById("geolocation-btn");
 let resetDefaultBtn = document.getElementById("reset-default-btn");
 
+let debugModeBox = document.getElementById("debug-mode");
 let sunriseInputEvent = new Event("input");
 let sunsetInputEvent = new Event("input");
+
+let currentlyEnabledTheme;
+
+if (DEBUG_MODE)
+    console.log("automaticDark DEBUG: DEBUG_MODE is enabled.");
 
 /*
 // Log everything stored.
@@ -29,13 +35,101 @@ browser.storage.local.get(null)
 // logAllAlarms();
 
 changeLogo();
+changeOptionsPageTheme();
+getChangeMode();
 
+
+}
+
+browser.storage.onChanged.addListener((changes, area) => {
+    let changedItems = Object.keys(changes);
+    for (let item of changedItems) {
+
+        // If the extension's current mode changes (eg. from daytime to nighttime),
+        // then adjust the change and option page theme accordingly.
+        if (item === CURRENT_MODE_KEY) {
+            
+            changeLogo();
+            changeOptionsPageTheme();
+        }
+    }
+});
+
+// Iterate through each extension to populate the dropdowns.
+browser.management.getAll().then((extensions) => {
+
+    if (DEBUG_MODE)
+        console.log(extensions);
+
+    for (let extension of extensions) {
+        // Add each theme as an option in the dropdowns.
+        if (extension.type === 'theme') {
+            let extOption = document.createElement('option');
+            extOption.textContent = extension.name;
+            extOption.value = extension.id;
+
+            daytimeThemeList.appendChild(extOption);
+            nighttimeThemeList.appendChild(extOption.cloneNode(true));
+
+            // Take note of the currently enabled theme.
+            if (extension.enabled === true) {
+                currentlyEnabledTheme = extension;
+                if (DEBUG_MODE)
+                    console.log(currentlyEnabledTheme);
+            }
+        }
+    }
+
+    browser.storage.local.get(DAYTIME_THEME_KEY)
+        .then((theme) => {
+            theme = theme[Object.keys(theme)[0]];
+
+            if (!isEmpty(theme)) {
+                // Set the default value of the dropdown.
+                daytimeThemeList.value = theme.themeId;
+            }
+
+            if (currentlyEnabledTheme.id === theme.themeId) {
+                if (DEBUG_MODE)
+                    console.log("Day time theme is the currentlyEnabledTheme.");
+            }
+            else {
+                if (DEBUG_MODE)
+                    console.log("Day time theme is not the currentlyEnabledTheme.");
+            }
+        }, onError);
+
+    browser.storage.local.get(NIGHTTIME_THEME_KEY)
+        .then((theme) => {
+            theme = theme[Object.keys(theme)[0]];
+
+            if (!isEmpty(theme)) {
+                // Set the default value of the dropdown.
+                nighttimeThemeList.value = theme.themeId;
+            }
+
+            if (currentlyEnabledTheme.id === theme.themeId) {
+                if (DEBUG_MODE)
+                    console.log("Night time theme is the currentlyEnabledTheme.");
+            }
+            else {
+                if (DEBUG_MODE)
+                    console.log("Night time theme is not the currentlyEnabledTheme.");
+            }
+        }, onError);
+});
+
+// Change the logo on the options page based on the current mode.
 function changeLogo() {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start changeLogo");
+
     browser.storage.local.get(CURRENT_MODE_KEY)
         .then((currentMode) => {
             currentMode = currentMode[CURRENT_MODE_KEY].mode;
 
-            console.log("Changing logo to: " + currentMode);
+            if (DEBUG_MODE)
+                console.log("automaticDark DEBUG: Changing logo to: " + currentMode);
 
             if (currentMode === "day-mode") {
                 document.querySelector(".logo.day-mode").style.display = "inline-block";
@@ -53,89 +147,33 @@ function changeLogo() {
         }, onError);
 }
 
+// Change the logo on the options page based on the current mode.
+function changeOptionsPageTheme() {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start changeOptionsPageTheme");
 
-// Darken the page theme if the current theme is 
-// Firefox's default dark theme.
-browser.management.get("firefox-compact-dark@mozilla.org")
-    .then((extInfo) => {
-        if (extInfo.enabled) {
-            document.getElementsByTagName("body")[0].className = "night"; 
-        }
-        else {
-            document.getElementsByTagName("body")[0].className = "day";
-        }
-    });
+    browser.storage.local.get(CURRENT_MODE_KEY)
+        .then((currentMode) => {
+            currentMode = currentMode[CURRENT_MODE_KEY].mode;
 
-// If the current theme changes to Firefox's default dark theme,
-// darken the Options page.
-browser.management.onEnabled.addListener((ext) => {
-    if (ext.id === "firefox-compact-dark@mozilla.org") {
-        document.getElementsByTagName("body")[0].className = "night"; 
-    }
-    else if (ext.type === "theme") {
-        document.getElementsByTagName("body")[0].className = "day";
-    }
-})
+            if (DEBUG_MODE)
+                console.log("automaticDark DEBUG: Changing options page theme to: " + currentMode);
 
-// Iterate through each extension to populate the dropdowns.
-browser.management.getAll().then((extensions) => {
-    for (let extension of extensions) {
-        // Add each theme as an option in the dropdowns.
-        if (extension.type === 'theme') {
-            let extOption = document.createElement('option');
-            extOption.textContent = extension.name;
-            extOption.value = extension.id;
-
-            daytimeThemeList.appendChild(extOption);
-            nighttimeThemeList.appendChild(extOption.cloneNode(true));
-
-            // Take note of the currently enabled theme.
-            if (extension.enabled === true) {
-                currentlyEnabledTheme = extension;
-                console.log(currentlyEnabledTheme);
-            }
-        }
-    }
-
-    
-    browser.storage.local.get(DAYTIME_THEME_KEY)
-        .then((theme) => {
-            theme = theme[Object.keys(theme)[0]];
-
-            if (!isEmpty(theme)) {
-                // Set the default value of the dropdown.
-                daytimeThemeList.value = theme.themeId;
-            }
-
-            if (currentlyEnabledTheme.id === theme.themeId) {
-                console.log("Day time theme is the currentlyEnabledTheme.");
-            }
-            else {
-                console.log("Day time theme is not the currentlyEnabledTheme.");
+            if (currentMode === "day-mode") {
+                document.getElementsByTagName("body")[0].className = "day";
+            } else if (currentMode === "night-mode") {
+                document.getElementsByTagName("body")[0].className = "night"; 
+            } else { // off-mode
+                document.getElementsByTagName("body")[0].className = "day";
             }
         }, onError);
+}
 
-    browser.storage.local.get(NIGHTTIME_THEME_KEY)
-        .then((theme) => {
-            theme = theme[Object.keys(theme)[0]];
-
-            if (!isEmpty(theme)) {
-                // Set the default value of the dropdown.
-                nighttimeThemeList.value = theme.themeId;
-            }
-
-            if (currentlyEnabledTheme.id === theme.themeId) {
-                console.log("Night time theme is the currentlyEnabledTheme.");
-            }
-            else {
-                console.log("Night time theme is not the currentlyEnabledTheme.");
-            }
-        }, onError);
-});
-
-getChangeMode();
-
+// Set the settings on the page based on what mode is set in storage.
 function getChangeMode() {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start getChangeMode");
+
     return browser.storage.local.get(CHANGE_MODE_KEY)
         .then((obj) => {
             if (obj[CHANGE_MODE_KEY].mode === "location-suntimes") {
@@ -165,6 +203,12 @@ function getChangeMode() {
 browser.storage.local.get(CHECK_TIME_STARTUP_ONLY_KEY)
     .then((obj) => {
         checkStartupBox.checked = obj[CHECK_TIME_STARTUP_ONLY_KEY].check;
+    }, onError);
+
+browser.storage.local.get(DEBUG_MODE_KEY)
+    .then((obj) => {
+        debugModeBox.checked = obj[DEBUG_MODE_KEY].check;
+        DEBUG_MODE = obj[DEBUG_MODE_KEY].check;
     }, onError);
 
 browser.storage.local.get([SUNRISE_TIME_KEY, SUNSET_TIME_KEY])
@@ -213,6 +257,12 @@ manualSuntimesRadio.addEventListener("input", function(event) {
 
 sysThemeRadio.addEventListener("input", function(event) {
     if (sysThemeRadio.checked) {
+        // browser.browserSettings.overrideContentColorScheme changes the following
+        // about:config to "2", effectively applying a light/dark theme based on the device theme
+        // and allowing the prefers-color-scheme media query to be used to detect the device theme.
+        // The about:config setting is: layout.css.prefers-color-scheme.content-override
+        browser.browserSettings.overrideContentColorScheme.set({value: "system"});
+
         browser.storage.local.set({[CHANGE_MODE_KEY]: {mode: "system-theme"}});
         sunriseInput.disabled = true;
         sunsetInput.disabled = true;
@@ -238,7 +288,16 @@ checkStartupBox.addEventListener("input", function(event) {
         createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24);
         createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24);
         startupOnlyMessage.style.display = "none";
-}
+    }
+});
+
+// Enable/disable the check on debug mode flag.
+debugModeBox.addEventListener("input", function(event) {
+    DEBUG_MODE = debugModeBox.checked;
+    browser.storage.local.set({[DEBUG_MODE_KEY]: {check: debugModeBox.checked}})
+        .then(() => {
+            console.log("automaticDark DEBUG_MODE has been set to: " + DEBUG_MODE);
+        }, onError);
 });
 
 // If the sunrise time input is changed,
@@ -317,6 +376,7 @@ resetDefaultBtn.addEventListener("click",
                     sunsetInput.disabled = false;
 
                     checkStartupBox.checked = DEFAULT_CHECK_TIME_STARTUP_ONLY;
+                    debugModeBox.checked = DEFAULT_DEBUG_MODE;
                     sunriseInput.value = DEFAULT_SUNRISE_TIME;
                     sunsetInput.value = DEFAULT_SUNSET_TIME;
 
@@ -334,3 +394,5 @@ resetDefaultBtn.addEventListener("click",
         }
     }
 );
+
+

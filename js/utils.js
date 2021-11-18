@@ -6,6 +6,9 @@ function timeInBetween(
         sunriseHours, sunriseMins, 
         sunsetHours, sunsetMins
     ){
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start timeInBetween");
+
     let curTimeInMins = curHours * 60 + parseInt(curMins);
     let sunriseInMins = sunriseHours * 60 + parseInt(sunriseMins);
     let sunsetInMins = sunsetHours * 60 + parseInt(sunsetMins);
@@ -17,18 +20,27 @@ function timeInBetween(
         difference += 1440;
         if (sunriseInMins <= curTimeInMins || curTimeInMins < sunsetInMins) {
             // So, we need to do the comparisons a little differently.
+            if (DEBUG_MODE)
+                console.log("automaticDark DEBUG: It is currently daytime");
             return true;
         }
     }
     else {
         if (sunriseInMins <= curTimeInMins && curTimeInMins < sunsetInMins) {
+            if (DEBUG_MODE)
+                console.log("automaticDark DEBUG: It is currently daytime");
             return true;
         }
-    }
+}
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: It is currently nighttime");
     return false;
 }
 
 function addLeadZero (num){
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start addLeadZero");
+
     if (num < 10) {
         return "0" + num;
     }
@@ -41,6 +53,9 @@ function addLeadZero (num){
 // Set storage only if overrideDefault is true or
 // the managed storage is empty.
 function setStorage(obj, overrideDefault = false) {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start setStorage");
+
     for (let item in obj) {
         browser.storage.local.get(item)
             .then((fetchedItem) => {
@@ -66,10 +81,15 @@ function setStorage(obj, overrideDefault = false) {
 
 // Helper: Get all active alarms.
 function logAllAlarms() {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start logAllAlarms");
+
     return browser.alarms.getAll()
         .then(function(alarms) {
-            console.log("automaticDark DEBUG: All active alarms: ");
-            console.log(alarms);
+            if (DEBUG_MODE) {
+                console.log("automaticDark DEBUG: All active alarms: ");
+                console.log(alarms);
+            }
         });
 }
 
@@ -85,6 +105,24 @@ function isEmpty(obj) {
             return false;
     }
     return true;
+}
+
+// Take in the time as hours and minutes and
+// return the next time it will occur as
+// milliseconds since the epoch.
+function convertToNextMilliEpoch(hours, minutes) {
+    let returnDate = new Date(Date.now());
+    returnDate.setHours(hours);
+    returnDate.setMinutes(minutes);
+    returnDate.setSeconds(0);
+    returnDate.setMilliseconds(0);
+
+    // If the specified time has already occurred, 
+    // the next time it will occur will be the next day.
+    if (returnDate < Date.now()) {
+        returnDate.setDate(returnDate.getDate() + 1);
+    }
+    return returnDate.getTime();
 }
 
 // Helper:
