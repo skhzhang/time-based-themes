@@ -19,7 +19,8 @@
     "alarms",
     "browserSettings",
     "management",
-    "storage"
+    "storage",
+    "theme"
   ],
 
   "background": {

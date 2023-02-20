@@ -2,7 +2,7 @@
 
 const KEY_PREFIX = 'autodark';
 
-const DEBUG_MODE_KEY = KEY_PREFIX + "debugMode"; 
+const DEBUG_MODE_KEY = KEY_PREFIX + "debugMode";
 
 const CURRENT_MODE_KEY = KEY_PREFIX + "currentMode"; // day-mode, night-mode
 
@@ -50,12 +50,12 @@ function init() {
     // Set values if they each have never been set before,
     // such as on first-time startup.
     return setStorage({
-            [CHANGE_MODE_KEY]: {mode: DEFAULT_CHANGE_MODE},
-            [CHECK_TIME_STARTUP_ONLY_KEY]: {check: DEFAULT_CHECK_TIME_STARTUP_ONLY},
-            [DEBUG_MODE_KEY]: {check: DEFAULT_DEBUG_MODE},
-            [SUNRISE_TIME_KEY]: {time: DEFAULT_SUNRISE_TIME},
-            [SUNSET_TIME_KEY]: {time: DEFAULT_SUNSET_TIME}
-        })
+        [CHANGE_MODE_KEY]: { mode: DEFAULT_CHANGE_MODE },
+        [CHECK_TIME_STARTUP_ONLY_KEY]: { check: DEFAULT_CHECK_TIME_STARTUP_ONLY },
+        [DEBUG_MODE_KEY]: { check: DEFAULT_DEBUG_MODE },
+        [SUNRISE_TIME_KEY]: { time: DEFAULT_SUNRISE_TIME },
+        [SUNSET_TIME_KEY]: { time: DEFAULT_SUNSET_TIME }
+    })
         .then((obj) => {
             // Check the user's themes and check the default daytime and
             // nighttime themes based on this.
@@ -63,8 +63,8 @@ function init() {
         }, onError)
         .then(() => {
             return setStorage({
-                [DAYTIME_THEME_KEY]: {themeId: DEFAULT_DAYTIME_THEME},
-                [NIGHTTIME_THEME_KEY]: {themeId: DEFAULT_NIGHTTIME_THEME}
+                [DAYTIME_THEME_KEY]: { themeId: DEFAULT_DAYTIME_THEME },
+                [NIGHTTIME_THEME_KEY]: { themeId: DEFAULT_NIGHTTIME_THEME }
             });
         }, onError)
         .then(() => {
@@ -95,35 +95,40 @@ function init() {
                             .then((obj) => {
                                 changeThemeBasedOnChangeMode(obj[CHANGE_MODE_KEY].mode);
 
-                                if (obj[CHANGE_MODE_KEY].mode === "location-suntimes" || obj[CHANGE_MODE_KEY].mode === "manual-suntimes"){
+                                if (obj[CHANGE_MODE_KEY].mode === "location-suntimes" || obj[CHANGE_MODE_KEY].mode === "manual-suntimes") {
                                     browser.alarms.clearAll();
                                     createAlarm(SUNRISE_TIME_KEY, NEXT_SUNRISE_ALARM_NAME, 60 * 24),
-                                    createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
+                                        createAlarm(SUNSET_TIME_KEY, NEXT_SUNSET_ALARM_NAME, 60 * 24)
                                 }
                             });
                     }
                 });
 
                 // Add listener that will change the theme if the mode is set to "system-theme"
-                window.matchMedia('(prefers-color-scheme: dark)').addListener((e) => {
+                window.matchMedia('(prefers-color-scheme: dark)').onchange = (e) => {
 
-                    if (DEBUG_MODE)
-                        console.log("automaticDark DEBUG: 10 - prefers-color-scheme changed.");
+                    if (!theme_change_block) {
+                        if (DEBUG_MODE)
+                            console.log("automaticDark DEBUG: 10 - prefers-color-scheme changed.");
 
-                    browser.storage.local.get(CHANGE_MODE_KEY)
-                        .then((obj) => {
-                            if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
-                                checkSysTheme();
-                            }
-                        });
-                }, onError);
+                        browser.storage.local.get(CHANGE_MODE_KEY)
+                            .then((obj) => {
+                                if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
+                                    checkSysTheme();
+                                }
+                            });
+                    } else {
+                        if (DEBUG_MODE)
+                            console.log("automaticDark DEBUG: Theme change is currently blocked.");
+                    }
+                };
 
                 if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
                     // browser.browserSettings.overrideContentColorScheme changes the following
                     // about:config to "2", effectively applying a light/dark theme based on the device theme
                     // and allowing the prefers-color-scheme media query to be used to detect the device theme.
                     // The about:config setting is: layout.css.prefers-color-scheme.content-override
-                    browser.browserSettings.overrideContentColorScheme.set({value: "system"});
+                    browser.browserSettings.overrideContentColorScheme.set({ value: "system" });
                 }
                 else if (obj[CHANGE_MODE_KEY].mode === "location-suntimes") {
                     // If we are set to get suntimes automatically,
@@ -131,8 +136,8 @@ function init() {
                     return calculateSuntimes()
                         .then((result) => {
                             return Promise.all([
-                                browser.storage.local.set({[SUNRISE_TIME_KEY]: {time: convertDateToString(result.nextSunrise)}}),
-                                browser.storage.local.set({[SUNSET_TIME_KEY]: {time: convertDateToString(result.nextSunset)}})
+                                browser.storage.local.set({ [SUNRISE_TIME_KEY]: { time: convertDateToString(result.nextSunrise) } }),
+                                browser.storage.local.set({ [SUNSET_TIME_KEY]: { time: convertDateToString(result.nextSunset) } })
                             ]);
                         })
                         .then(() => {
@@ -168,7 +173,7 @@ function changeThemeBasedOnChangeMode(mode) {
             if (mode === "system-theme") {
                 return checkSysTheme();
             }
-            else if (mode === "location-suntimes" || mode === "manual-suntimes"){
+            else if (mode === "location-suntimes" || mode === "manual-suntimes") {
                 return checkTime();
             }
         });
@@ -181,9 +186,9 @@ function createAlarm(timeKey, alarmName, periodInMinutes = null) {
         console.log("automaticDark DEBUG: Start createAlarm");
 
     return browser.storage.local.get([
-            CHECK_TIME_STARTUP_ONLY_KEY,
-            timeKey
-        ])
+        CHECK_TIME_STARTUP_ONLY_KEY,
+        timeKey
+    ])
         .then((obj) => {
             let timeSplit = obj[timeKey].time.split(":");
 
@@ -192,7 +197,7 @@ function createAlarm(timeKey, alarmName, periodInMinutes = null) {
                 when,
                 periodInMinutes
             })
-         }, onError)
+        }, onError)
         .then(() => {
             //logAllAlarms();
         }, onError);
@@ -216,8 +221,8 @@ function alarmListener(alarmInfo) {
                         calculateSuntimes()
                             .then((result) => {
                                 return Promise.all([
-                                    browser.storage.local.set({[SUNRISE_TIME_KEY]: {time: convertDateToString(result.nextSunrise)}}),
-                                    browser.storage.local.set({[SUNSET_TIME_KEY]: {time: convertDateToString(result.nextSunset)}})
+                                    browser.storage.local.set({ [SUNRISE_TIME_KEY]: { time: convertDateToString(result.nextSunrise) } }),
+                                    browser.storage.local.set({ [SUNSET_TIME_KEY]: { time: convertDateToString(result.nextSunset) } })
                                 ]);
                             })
                             .then(() => {
@@ -227,7 +232,7 @@ function alarmListener(alarmInfo) {
                                 ]);
                             });
 
-                        
+
                     }
                     enableTheme(values, DAYTIME_THEME_KEY);
                 }
@@ -241,8 +246,8 @@ function alarmListener(alarmInfo) {
                         calculateSuntimes()
                             .then((result) => {
                                 return Promise.all([
-                                    browser.storage.local.set({[SUNRISE_TIME_KEY]: {time: convertDateToString(result.nextSunrise)}}),
-                                    browser.storage.local.set({[SUNSET_TIME_KEY]: {time: convertDateToString(result.nextSunset)}})
+                                    browser.storage.local.set({ [SUNRISE_TIME_KEY]: { time: convertDateToString(result.nextSunrise) } }),
+                                    browser.storage.local.set({ [SUNSET_TIME_KEY]: { time: convertDateToString(result.nextSunset) } })
                                 ]);
                             })
                             .then(() => {
@@ -282,14 +287,14 @@ function checkTime() {
             let sunsetSplit = obj[SUNSET_TIME_KEY].time.split(":");
 
             if (timeInBetween(
-                    hours, minutes, 
-                    sunriseSplit[0], sunriseSplit[1], 
-                    sunsetSplit[0], sunsetSplit[1])) {
+                hours, minutes,
+                sunriseSplit[0], sunriseSplit[1],
+                sunsetSplit[0], sunsetSplit[1])) {
                 return browser.storage.local.get(DAYTIME_THEME_KEY)
                     .then((obj) => {
                         return enableTheme(obj, DAYTIME_THEME_KEY)
                             .then(() => {
-                                return browser.storage.local.set({[CURRENT_MODE_KEY]: {mode: "day-mode"}});
+                                return browser.storage.local.set({ [CURRENT_MODE_KEY]: { mode: "day-mode" } });
                             });
                     }, onError);
             } else {
@@ -297,7 +302,7 @@ function checkTime() {
                     .then((obj) => {
                         return enableTheme(obj, NIGHTTIME_THEME_KEY)
                             .then(() => {
-                                return browser.storage.local.set({[CURRENT_MODE_KEY]: {mode: "night-mode"}});
+                                return browser.storage.local.set({ [CURRENT_MODE_KEY]: { mode: "night-mode" } });
                             });
                     }, onError);
             }
@@ -309,13 +314,13 @@ function checkSysTheme() {
     if (DEBUG_MODE)
         console.log("automaticDark DEBUG: Start checkSysTheme");
 
-    if(window.matchMedia('(prefers-color-scheme: dark)').matches){
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         if (DEBUG_MODE)
             console.log("automaticDark DEBUG: 90 checkSysTheme - User prefers dark interface");
         return browser.storage.local.get(NIGHTTIME_THEME_KEY)
             .then((obj) => {
                 return Promise.all([
-                    browser.storage.local.set({[CURRENT_MODE_KEY]: {mode: "night-mode"}}), 
+                    browser.storage.local.set({ [CURRENT_MODE_KEY]: { mode: "night-mode" } }),
                     enableTheme(obj, NIGHTTIME_THEME_KEY)
                 ]);
             }, onError);
@@ -325,7 +330,7 @@ function checkSysTheme() {
         return browser.storage.local.get(DAYTIME_THEME_KEY)
             .then((obj) => {
                 return Promise.all([
-                    browser.storage.local.set({[CURRENT_MODE_KEY]: {mode: "day-mode"}}),
+                    browser.storage.local.set({ [CURRENT_MODE_KEY]: { mode: "day-mode" } }),
                     enableTheme(obj, DAYTIME_THEME_KEY)
                 ]);
             }, onError);
@@ -344,7 +349,16 @@ function enableTheme(theme, themeKey) {
             if (!extInfo.enabled) {
                 if (DEBUG_MODE)
                     console.log("automaticDark DEBUG: 100 enableTheme - Enabled theme " + theme.themeId);
-                browser.management.setEnabled(theme.themeId, true);
+                theme_change_block = true;
+                browser.management.setEnabled(theme.themeId, true).then(() => {
+                    browser.theme.getCurrent().then(current_theme => {
+                        if (current_theme.colors) {
+                            current_theme.properties.color_scheme = "system";
+                            current_theme.properties.content_color_scheme = "system";
+                            browser.theme.update(current_theme).then(() => theme_change_block = false);
+                        }
+                    });
+                });
             }
             else {
                 if (DEBUG_MODE)
@@ -352,6 +366,16 @@ function enableTheme(theme, themeKey) {
             }
         }, onError);
 }
+
+var theme_change_block = false; // This is just a stupid way to stop flashing
+
+browser.theme.getCurrent().then(current_theme => {
+    if (current_theme.colors) {
+        current_theme.properties.color_scheme = "auto";
+        current_theme.properties.content_color_scheme = "auto";
+        browser.theme.update(current_theme).then(() => theme_change_block = false);
+    }
+});
 
 // Set the currently enabled theme
 // as the default daytime/nighttime theme.
@@ -391,14 +415,14 @@ function setGeolocation() {
             reject('Geolocation is not supported by your browser.');
         } else {
             navigator.geolocation.getCurrentPosition((position) => {
-                    setStorage({
-                        [GEOLOCATION_LATITUDE_KEY]: {latitude: position.coords.latitude},
-                        [GEOLOCATION_LONGITUDE_KEY]: {longitude: position.coords.longitude}
-                    })
+                setStorage({
+                    [GEOLOCATION_LATITUDE_KEY]: { latitude: position.coords.latitude },
+                    [GEOLOCATION_LONGITUDE_KEY]: { longitude: position.coords.longitude }
+                })
                     .then(() => {
-                        resolve(); 
+                        resolve();
                     });
-                }, () => {
+            }, () => {
                 reject("Unable to fetch current location.");
             });
         }
@@ -416,7 +440,7 @@ function calculateSuntimes() {
 
             // Prepare today and tomorrow's date for calculations.
             let today = new Date(Date.now());
-            let tomorrow =  new Date(Date.now());
+            let tomorrow = new Date(Date.now());
             tomorrow.setDate(tomorrow.getDate() + 1);
             let dates = [today, tomorrow];
 
@@ -425,8 +449,8 @@ function calculateSuntimes() {
                 results.push(
                     // Do the calculations using SunCalc.
                     // Figure out today and tomorrow's sunrise/sunset times.
-                    SunCalc.getTimes(date, 
-                        position[GEOLOCATION_LATITUDE_KEY].latitude, 
+                    SunCalc.getTimes(date,
+                        position[GEOLOCATION_LATITUDE_KEY].latitude,
                         position[GEOLOCATION_LONGITUDE_KEY].longitude)
                 );
             });
@@ -447,6 +471,6 @@ function calculateSuntimes() {
                 }
             });
 
-            return {nextSunrise: nextSunrise, nextSunset: nextSunset};
+            return { nextSunrise: nextSunrise, nextSunset: nextSunset };
         }, onError);
 }
