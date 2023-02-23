@@ -107,15 +107,21 @@ function init() {
                 // Add listener that will change the theme if the mode is set to "system-theme"
                 window.matchMedia('(prefers-color-scheme: dark)').addListener((e) => {
 
-                    if (DEBUG_MODE)
-                        console.log("automaticDark DEBUG: 10 - prefers-color-scheme changed.");
+                    if (!detect_scheme_change_block) {
+                        if (DEBUG_MODE)
+                            console.log("automaticDark DEBUG: 10 - prefers-color-scheme changed.");
 
-                    browser.storage.local.get(CHANGE_MODE_KEY)
-                        .then((obj) => {
-                            if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
-                                checkSysTheme();
-                            }
+                        browser.storage.local.get(CHANGE_MODE_KEY)
+                            .then((obj) => {
+                                if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
+                                    checkSysTheme();
+                                }
                         });
+                    } else {
+                        if (DEBUG_MODE)
+                            console.log("automaticDark DEBUG: Scheme change detection is currently disabled.");
+                    }
+
                 }, onError);
 
                 if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
@@ -344,13 +350,30 @@ function enableTheme(theme, themeKey) {
             if (!extInfo.enabled) {
                 if (DEBUG_MODE)
                     console.log("automaticDark DEBUG: 100 enableTheme - Enabled theme " + theme.themeId);
-                browser.management.setEnabled(theme.themeId, true);
+                detect_scheme_change_block = true; // Temporarily disables detection of color scheme change
+                browser.management.setEnabled(theme.themeId, true).then(enableSchemeChangeDetection);
             }
             else {
                 if (DEBUG_MODE)
                     console.log("automaticDark DEBUG: 100 enableTheme - " + theme.themeId + " is already enabled.");
             }
         }, onError);
+}
+
+var detect_scheme_change_block = false; // This is just a sneaky way to prevent flashing
+
+enableSchemeChangeDetection();
+
+function enableSchemeChangeDetection() {
+    browser.theme.getCurrent().then(current_theme => {
+        if (current_theme.colors) { // "System theme — auto" is an empty object
+            current_theme.properties.color_scheme = "system"; // Change the proterty of the theme object
+            current_theme.properties.content_color_scheme = "system"; // Optional
+            browser.theme.update(current_theme).then(() => detect_scheme_change_block = false); // Applies amended theme and un-block scheme change detection
+        } else {
+            detect_scheme_change_block = false;
+        }
+    });
 }
 
 // Set the currently enabled theme
