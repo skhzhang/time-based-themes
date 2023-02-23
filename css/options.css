@@ -7,6 +7,20 @@ body {
     padding: 0;
 }
 
+.night {
+}
+
+@media (prefers-color-scheme: dark) {
+  /* defaults to dark theme */
+  body {
+    background-color: #2a2a2e;
+    color: rgba(249, 249, 250, 0.8);
+  }
+    a, a:visited {
+        color: #45A1FF;
+    }
+}
+
 header {
     color: rgba(249, 249, 250, 0.8);
     background-color: #202020;
@@ -32,13 +46,6 @@ a:visited {
     margin: 1.5em 5em;
 }
 
-.night {
-    background-color: #2a2a2e;
-    color: rgba(249, 249, 250, 0.8);
-}
-.night a, .night a:visited {
-    color: #45A1FF;
-}
 
 a.no-style, .night a.no-style {
     color: inherit;

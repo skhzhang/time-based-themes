@@ -24,15 +24,17 @@ let currentlyEnabledTheme;
 if (DEBUG_MODE)
     console.log("automaticDark DEBUG: DEBUG_MODE is enabled.");
 
-/*
+
 // Log everything stored.
-browser.storage.local.get(null)
-    .then((results) => {
-        console.log("automaticDark DEBUG: All stored data:");
-        console.log(results);
-    }, onError);
-*/
-// logAllAlarms();
+if (DEBUG_MODE) {
+    browser.storage.local.get(null)
+        .then((results) => {
+            console.log("automaticDark DEBUG: Options page opened. All stored data:");
+            console.log(results);
+        }, onError);
+
+    // logAllAlarms();
+}
 
 changeLogo();
 changeOptionsPageTheme();
@@ -40,6 +42,10 @@ getChangeMode();
 
 browser.storage.onChanged.addListener((changes, area) => {
     let changedItems = Object.keys(changes);
+
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Browser storage changed.");
+
     for (let item of changedItems) {
 
         // If the extension's current mode changes (eg. from daytime to nighttime),
@@ -61,6 +67,10 @@ browser.management.getAll().then((extensions) => {
     for (let extension of extensions) {
         // Add each theme as an option in the dropdowns.
         if (extension.type === 'theme') {
+
+            if (DEBUG_MODE)
+                console.log(extension);
+
             let extOption = document.createElement('option');
             extOption.textContent = extension.name;
             extOption.value = extension.id;
@@ -148,7 +158,7 @@ function changeLogo() {
 function changeOptionsPageTheme() {
     if (DEBUG_MODE)
         console.log("automaticDark DEBUG: Start changeOptionsPageTheme");
-
+    /*
     browser.storage.local.get(CURRENT_MODE_KEY)
         .then((currentMode) => {
             currentMode = currentMode[CURRENT_MODE_KEY].mode;
@@ -164,6 +174,7 @@ function changeOptionsPageTheme() {
                 document.getElementsByTagName("body")[0].className = "day";
             }
         }, onError);
+    */
 }
 
 // Set the settings on the page based on what mode is set in storage.
