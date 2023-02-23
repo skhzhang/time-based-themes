@@ -26,15 +26,15 @@ if (DEBUG_MODE)
 
 
 // Log everything stored.
-if (DEBUG_MODE) {
-    browser.storage.local.get(null)
-        .then((results) => {
+browser.storage.local.get(null)
+    .then((results) => {
+        if (DEBUG_MODE) {
             console.log("automaticDark DEBUG: Options page opened. All stored data:");
             console.log(results);
-        }, onError);
+        }
+    }, onError);
 
-    // logAllAlarms();
-}
+// logAllAlarms();
 
 changeLogo();
 changeOptionsPageTheme();
@@ -44,7 +44,7 @@ browser.storage.onChanged.addListener((changes, area) => {
     let changedItems = Object.keys(changes);
 
     if (DEBUG_MODE)
-        console.log("automaticDark DEBUG: Browser storage changed.");
+        console.log("automaticDark DEBUG: Browser storage changed. Change logo on Options page.");
 
     for (let item of changedItems) {
 
