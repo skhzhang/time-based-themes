@@ -71,6 +71,10 @@ function init() {
             });
         }, onError)
         .then(() => {
+            // this needs to be done regardless of settings
+            // otherwise we don't know what the system theme is, when the user switches to system-theme
+            enableSystemThemeTracking();
+
             // If flag is not set to check only on startup,
             // create alarms to change the theme in the future.
             browser.alarms.onAlarm.addListener(alarmListener);
@@ -106,26 +110,6 @@ function init() {
                             });
                     }
                 });
-
-                // Add listener that will change the theme if the mode is set to "system-theme"
-                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-
-                    if (!detect_scheme_change_block) {
-                        if (DEBUG_MODE)
-                            console.log("automaticDark DEBUG: 10 - prefers-color-scheme changed.");
-
-                        browser.storage.local.get(CHANGE_MODE_KEY)
-                            .then((obj) => {
-                                if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
-                                    checkSysTheme();
-                                }
-                        });
-                    } else {
-                        if (DEBUG_MODE)
-                            console.log("automaticDark DEBUG: prefers-color-scheme changed, but scheme change detection is currently disabled.");
-                    }
-
-                }, onError);
 
                 if (obj[CHANGE_MODE_KEY].mode === "system-theme") {
                     // browser.browserSettings.overrideContentColorScheme changes the following
@@ -178,7 +162,7 @@ function changeThemeBasedOnChangeMode(mode) {
                 console.log("automaticDark DEBUG: 50 changeThemeBasedOnChangeMode - Mode is set to: " + mode);
 
             if (mode === "system-theme") {
-                return checkSysTheme();
+                return checkSysTheme(); 
             }
             else if (mode === "location-suntimes" || mode === "manual-suntimes"){
                 return checkTime();
@@ -317,13 +301,18 @@ function checkTime() {
 }
 
 // Check the system theme and set the theme accordingly.
+// system-theme is updated using events, that are sent on startup and during runtime.
+// because the background script cant determine the system theme on it's owb ( #43 ), it cannot update the theme imperatively.
+var system_is_dark = null;
+
 function checkSysTheme() {
     if (DEBUG_MODE)
         console.log("automaticDark DEBUG: Start checkSysTheme");
 
-    if(window.matchMedia('(prefers-color-scheme: dark)').matches){
+    if(system_is_dark == true){
         if (DEBUG_MODE)
             console.log("automaticDark DEBUG: 90 checkSysTheme - User prefers dark interface");
+            
         return browser.storage.local.get(NIGHTTIME_THEME_KEY)
             .then((obj) => {
                 return Promise.all([
@@ -331,9 +320,10 @@ function checkSysTheme() {
                     enableTheme(obj, NIGHTTIME_THEME_KEY)
                 ]);
             }, onError);
-    } else {
+    } else if (system_is_dark == false) {
         if (DEBUG_MODE)
             console.log("automaticDark DEBUG: 90 checkSysTheme - User prefers light interface");
+
         return browser.storage.local.get(DAYTIME_THEME_KEY)
             .then((obj) => {
                 return Promise.all([
@@ -342,6 +332,48 @@ function checkSysTheme() {
                 ]);
             }, onError);
     }
+    // if system_is_dark is null, it probably won't be for long
+    // we wouldn't want to assume a default, then change the theme back and forth when events come in
+}
+
+// This enables listening to messeges from tabs (system-theme-notifier.js) that are detecting changes to the system theme
+// this needs to be done to keep the system_is_dark variable in sync,
+// which is then applied normally when checkSysTheme is called. 
+function enableSystemThemeTracking() {
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: Start enableSystemThemeTracking");
+
+    // watching the media never did anything
+    browser.runtime.onMessage.removeListener(systemThemeListener);
+    browser.runtime.onMessage.addListener(systemThemeListener);
+}
+
+function systemThemeListener(msg, sender) {
+    if (msg.type!=="color-scheme-change") {
+        return false;
+    }
+
+    if (DEBUG_MODE)
+        console.log("automaticDark DEBUG: 10 - prefers-color-scheme changed in tab: ", msg.tab, " and is now: ", msg.prefersColorScheme);
+
+    if (system_is_dark !== msg.prefersColorScheme) {
+        if (DEBUG_MODE)
+            console.log("automaticDark DEBUG: 10 - new system theme recognized: ", msg.prefersColorScheme);
+
+        // SAVE the system theme
+        system_is_dark = msg.prefersColorScheme;
+
+        // UPDATE theme (if system-theme mode is on.)
+        browser.storage.local.get(CHANGE_MODE_KEY)
+        .then((obj) => {
+            console.log("automaticDark DEBUG: 10 - new system theme so updating ");
+            if (obj[CHANGE_MODE_KEY].mode === "system-theme" && !detect_scheme_change_block) { // doesnt update theme, if block is set
+                checkSysTheme();
+            }
+        });
+    }
+
+    return false;
 }
 
 // Parse the object given and enable the theme.if it is not
