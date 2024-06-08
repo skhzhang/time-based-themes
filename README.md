@@ -26,6 +26,6 @@ Set Firefox to change the UI to a dark theme during the night and change back to
 ## Feedback / Contributions
 Feedback and pull requests welcome! What do you think? Let me know!
 - [Add a new issue](https://github.com/skhzhang/time-based-themes/issues/new)
-- [Email](mailto:simonkhzhang@gmail.com)
+- [Email](mailto:simonkhzhang+automaticdark@gmail.com)
 
 [issue5]: https://github.com/skhzhang/time-based-themes/issues/5
