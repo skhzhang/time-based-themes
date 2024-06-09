@@ -20,12 +20,20 @@
     "browserSettings",
     "management",
     "storage",
-    "theme"
+    "theme",
+    "<all_urls>"
   ],
 
   "background": {
     "scripts": ["js/utils.js", "js/common.js", "js/background.js", "lib/suncalc.js"]
   },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["js/system-theme-notifier.js"]
+    }
+  ],
 
   "options_ui": {
       "page": "html/options.html",
