@@ -15,6 +15,8 @@ const SUNSET_TIME_KEY = KEY_PREFIX + "sunsetTime";
 const NEXT_SUNRISE_ALARM_NAME = KEY_PREFIX + "nextSunrise";
 const NEXT_SUNSET_ALARM_NAME = KEY_PREFIX + "nextSunset";
 
+const USER_LATITUDE_KEY = KEY_PREFIX + "usrLatitude";
+const USER_LONGITUDE_KEY = KEY_PREFIX + "usrLongitude";
 const GEOLOCATION_LATITUDE_KEY = KEY_PREFIX + "geoLatitude";
 const GEOLOCATION_LONGITUDE_KEY = KEY_PREFIX + "geoLongitude";
 
@@ -56,6 +58,8 @@ function init() {
             [CHANGE_MODE_KEY]: {mode: DEFAULT_CHANGE_MODE},
             [CHECK_TIME_STARTUP_ONLY_KEY]: {check: DEFAULT_CHECK_TIME_STARTUP_ONLY},
             [DEBUG_MODE_KEY]: {check: DEFAULT_DEBUG_MODE},
+            [USER_LATITUDE_KEY]: {latitude: 0},
+            [USER_LONGITUDE_KEY]: {longitude: 0},
             [SUNRISE_TIME_KEY]: {time: DEFAULT_SUNRISE_TIME},
             [SUNSET_TIME_KEY]: {time: DEFAULT_SUNSET_TIME}
         })
@@ -451,17 +455,31 @@ function setGeolocation() {
 
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-            reject('Geolocation is not supported by your browser.');
+            browser.storage.local.get([USER_LATITUDE_KEY, USER_LONGITUDE_KEY])
+                .then((position) => {
+                    if (position[USER_LATITUDE_KEY].latitude != 0 && position[USER_LONGITUDE_KEY].longitude != 0){
+
+                        setStorage({
+                            [GEOLOCATION_LATITUDE_KEY]: {latitude: position[USER_LATITUDE_KEY].latitude},
+                            [GEOLOCATION_LONGITUDE_KEY]: {longitude: position[USER_LONGITUDE_KEY].longitude}
+                        })
+                        .then(() => {
+                            resolve();
+                        });
+                    } else {
+                        reject('Geolocation is not supported by your browser.');
+                    }
+                })
         } else {
             navigator.geolocation.getCurrentPosition((position) => {
-                    setStorage({
-                        [GEOLOCATION_LATITUDE_KEY]: {latitude: position.coords.latitude},
-                        [GEOLOCATION_LONGITUDE_KEY]: {longitude: position.coords.longitude}
-                    })
-                    .then(() => {
-                        resolve(); 
-                    });
-                }, () => {
+                setStorage({
+                    [GEOLOCATION_LATITUDE_KEY]: {latitude: position.coords.latitude},
+                    [GEOLOCATION_LONGITUDE_KEY]: {longitude: position.coords.longitude}
+                })
+                .then(() => {
+                    resolve();
+                });
+            }, () => {
                 reject("Unable to fetch current location.");
             });
         }

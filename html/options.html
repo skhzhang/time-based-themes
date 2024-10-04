@@ -21,8 +21,16 @@
 
         <p>
             <input type="radio" id="automatic-suntimes-radio" name="set-suntimes" value="automatic-suntimes">
-            <label for="automatic-suntimes-radio">Automatically set sunrise/sunset times (requires location)</label>
-            <label id="location-permission-warning" style="color: red; display: none;"> - Location permission needs to be granted</label>
+            <label for="automatic-suntimes-radio">Automatically get sunrise/sunset times using your location</label>
+            <label id="location-permission-warning" style="color: red; display: none;"> - Location permission needs to be granted if these are zero</label>
+
+            <div style="padding-left: 40px;">
+                <label for="latitude">Latitude: </label>
+                <input id="latitude" type="number" min="-90" max="90">
+
+                <label for="longitude">Longitude: </label>
+                <input id="longitude" type="number" min="-180" max="180">
+            </div>
         </p>
         <p>
             <input type="radio" id="manual-suntimes-radio" name="set-suntimes" value="manual-suntimes">
