@@ -10,6 +10,39 @@ function onError(error) {
     console.log("automaticDark Error: " + error);
 }
 
+// getCurrent() returns absolute moz-extension: image URLs that update()
+// rejects. Embed PNG/JPEG images as data URLs when reapplying the theme
+// with a system color scheme (Firefox bug 1618563).
+async function sanitizeThemeForUpdate(theme) {
+    if (!theme.images) return theme;
+
+    async function convertImage(image) {
+        if (typeof image !== "string" || !image.startsWith("moz-extension://")) return image;
+        const response = await fetch(image);
+        if (!response.ok) throw new Error("Could not read theme image: " + response.status);
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error);
+            reader.onabort = () => reject(new Error("Theme image read was aborted."));
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    // Ignore legacy/experiment image fields: they are not painted, but their
+    // absolute URLs would still fail update() validation.
+    const images = {};
+    if (theme.images.theme_frame !== undefined) {
+        images.theme_frame = await convertImage(theme.images.theme_frame);
+    }
+    if (theme.images.additional_backgrounds) {
+        images.additional_backgrounds = await Promise.all(
+            theme.images.additional_backgrounds.map(convertImage));
+    }
+    return {...theme, images};
+}
+
 // Helper: Figure out if a time is in-between two times.
 // Return true if it is daytime.
 // Return false if it is nighttime.
